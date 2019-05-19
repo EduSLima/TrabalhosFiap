@@ -19,7 +19,7 @@ Inicicalmente vamos instalar os pacotes, caso seja necessário, que serão usado
 options(warn =-1)
 
 #lista de pacotes que iremos utilizar no projeto
-Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly")
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally")
 
 #com base nos pacotes instalados crio uma variavel somente com os pacotes que não temos ainda para realizar a instalação 
 #dos pacotes que de fato não possuimos
@@ -77,29 +77,53 @@ nome_colunas <- c("acidez_fixa","acidez_volatil","acido_citrico","acucar_residua
 
 #uso da biblioteca readr é para obter uma performance de carga melhor que a lib padrão do R
 vinho_branco <- read_delim("./DataSets/winequality-white.csv" ,delim = ";", col_names = nome_colunas, skip = 1)
+
 vinho_tinto  <- read_delim("./DataSets/winequality-red.csv"   ,delim = ";", col_names = nome_colunas, skip = 1)
 
 ```
 
 
-Exibindo os dados das dimensões, sumário e as primeiras linhas do DataFrame Vinho Branco
+Juntando os 2 DataSets em um único adicionando novas colunas que definem o tipo do vinho se é Tinto ou Branco e uma classificação de bom ou ruim de acordo com sua nota, onde menor que 5 é ruim até 7 bom e acima disso excelentte
+
+```{r}
+
+#Adicionando coluna tipo de vinho
+vinho_branco$tipo <- "Branco"
+vinho_tinto$tipo <- "Tinto"
+
+#juntando os 2 datasets
+vinhos <- rbind.data.frame(vinho_branco,vinho_tinto)
+
+#converte tipo paara fator
+vinhos$tipo <- factor(vinhos$tipo, ordered = T)
+
+#Criando uma coluna de Ranking para dizer o quão bom é o vinho
+vinhos$rating <- factor(ifelse(vinhos$qualidade <= 5, 'Ruim', ifelse(vinhos$qualidade <= 7, 'Bom', 'Excelente')))
+
+```
+
+
+
+Exibindo os dados das dimensões, sumário, estrutura e as primeiras linhas do DataFrame Vinhos
 
 ```{r}
 #demonstrando as quantidades de dimensoes de ambos datasets
-dim(vinho_branco)
-summary(vinho_branco)
-head (vinho_branco)
+dim(vinhos)
+skim(vinhos)
+str(vinhos)
+head (vinhos,3)
 ```
 
 
-Exibindo os dados das dimensões, sumário e as primeiras linhas do DataFrame Vinho Tinto
+Distribuição da Qualidade do Vinho por tipo de vinho e classificação
 
 ```{r}
 
-dim(vinho_tinto)
-summary(vinho_tinto)
-head (vinho_tinto)
-```
+grafico_1 <- qplot(qualidade, data = vinhos, fill = tipo, binwidth = 1)  
+grafico_2 <- qplot(qualidade, data = vinhos, fill = rating, binwidth = 1) 
 
+grid.arrange(grafico_1, grafico_2, ncol=2)
+
+```
 
 
