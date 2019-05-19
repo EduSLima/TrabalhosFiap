@@ -1,0 +1,105 @@
+---
+title: "ANALISE DO DATASET WINE QUALITY"
+author: "RM334304 - EDUARDO SIQUEIRA DE LIMA"
+output: html_notebook
+---
+
+&nbsp; 
+
+###  **"Conceitos Estatísticos para IA"**  
+####  *Prof. Adelaide Alves de Oliveira*
+
+&nbsp;
+&nbsp;
+
+Inicicalmente vamos instalar os pacotes, caso seja necessário, que serão usados no decorrer da análise
+```{r}
+
+#ignorando alertas para não poluir a exibição do markdwon
+options(warn =-1)
+
+#lista de pacotes que iremos utilizar no projeto
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly")
+
+#com base nos pacotes instalados crio uma variavel somente com os pacotes que não temos ainda para realizar a instalação 
+#dos pacotes que de fato não possuimos
+PacotesNovos <- Pacotes_Necessarios[!(Pacotes_Necessarios %in% installed.packages()[,"Package"])]
+if(length(PacotesNovos)){ install.packages(PacotesNovos)} else {print("Todos os Pacotes Estão Instalados")}
+
+```
+
+
+
+Carregando todas as as Bibliotecas mencionadas no passo anterior
+```{r}
+lapply(Pacotes_Necessarios, require, character.only = TRUE)
+```
+
+
+
+Importando os Datasets de Wines Quality.
+
+Os dados foram obtidos do site: https://archive.ics.uci.edu/ml/datasets/wine+quality, 2 arquivos foram baixados:
+
+1. winequality-red.csv    *(dados dos vinhos tintos)*
+2. winequality-white.csv  *(dados dos vinhos brancos)*
+
+Analisando o arquivo antes de importar notamos que os nomes das colunas não são os mais amigaveis para fazer uma análise uma vez que alguns deles estão separados por espaço neste caso antes de subir iremos normaliza-los, para tal criaremos um array de nomes para passar como parâmetro no momento da carga dos dados
+
+&nbsp;
+&nbsp;
+
+
+#### Lista DE - PARA das colunas
+
+
+
+Nome no Arquivo     |  Nome Traduzido
+----------------    |-----------------
+fixed acidity       |acidez_fixa
+volatile acidity    |acidez_volatil
+citric acid         |acido_citrico	
+residual sugar      |acucar_residual
+chlorides           |cloretos
+free sulfur dioxide |fsd
+total sulfur dioxide|tsd
+density             |densidade
+pH                  |PH
+sulphates           |sulfatos
+alcohol             |grau_alcolico
+quality             |qualidade
+
+
+```{r}
+
+#Criando uma variável nome_colunas que receberá os nomes das colunas que normalizaremos a fim de facilitar o resto da análise
+nome_colunas <- c("acidez_fixa","acidez_volatil","acido_citrico","acucar_residual","cloretos", "fsd", "tsd","densidade","PH", "sulfatos","grau_alcolico","qualidade")
+
+#uso da biblioteca readr é para obter uma performance de carga melhor que a lib padrão do R
+vinho_branco <- read_delim("./DataSets/winequality-white.csv" ,delim = ";", col_names = nome_colunas, skip = 1)
+vinho_tinto  <- read_delim("./DataSets/winequality-red.csv"   ,delim = ";", col_names = nome_colunas, skip = 1)
+
+```
+
+
+Exibindo os dados das dimensões, sumário e as primeiras linhas do DataFrame Vinho Branco
+
+```{r}
+#demonstrando as quantidades de dimensoes de ambos datasets
+dim(vinho_branco)
+summary(vinho_branco)
+head (vinho_branco)
+```
+
+
+Exibindo os dados das dimensões, sumário e as primeiras linhas do DataFrame Vinho Tinto
+
+```{r}
+
+dim(vinho_tinto)
+summary(vinho_tinto)
+head (vinho_tinto)
+```
+
+
+
