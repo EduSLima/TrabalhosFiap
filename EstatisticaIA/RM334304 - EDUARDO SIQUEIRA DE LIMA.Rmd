@@ -70,7 +70,7 @@ alcohol             |grau_alcolico
 quality             |qualidade
 
 
-```{r}
+```{r, results="hide"}
 
 #Criando uma variável nome_colunas que receberá os nomes das colunas que normalizaremos a fim de facilitar o resto da análise
 nome_colunas <- c("acidez_fixa","acidez_volatil","acido_citrico","acucar_residual","cloretos", "fsd", "tsd","densidade","PH", "sulfatos","grau_alcolico","qualidade")
@@ -106,12 +106,20 @@ vinhos$rating <- factor(ifelse(vinhos$qualidade <= 5, 'Ruim', ifelse(vinhos$qual
 
 Exibindo os dados das dimensões, sumário, estrutura e as primeiras linhas do DataFrame Vinhos
 
+```{r ,results="hide"}
+
+attach(vinhos)
+
+```
+
 ```{r}
 #demonstrando as quantidades de dimensoes de ambos datasets
+
 dim(vinhos)
 skim(vinhos)
 str(vinhos)
 head (vinhos,3)
+
 ```
 
 
@@ -127,4 +135,62 @@ grid.arrange(grafico_1, grafico_2, ncol=2)
 ```
 
 
-Observa-se que as qualidades dos vinhos se encontram em uma distribuição normal
+Observa-se que as qualidades dos vinhos se encontram em uma distribuição normal. Sabe -se que a maior concentração de notas está na regão entre nota 3 e 9. Entretando, antes de aprofundarmos em qualquer análise que envolvem os dados é necessário pontuar se há existencia de outliers e remove-los caso existam
+
+O comando aplicado para todos atributos abaixo exibição dos box-plot abaixo foi:
+
+> *boxplot(Column_Name, col="slategray2", pch=19) * <br />
+> *mtext("Titulo" , cex=0.8, side=1, line=2)*
+
+```{r, , echo=FALSE}
+
+par(mfrow=c(1,6), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
+  boxplot(acidez_fixa, col="slategray2", pch=19)
+  mtext("Acidez Fixa" , cex=0.8, side=1, line=2)
+  boxplot(acidez_volatil, col="slategray2", pch=19)
+  mtext("Acidez Volatil", cex=0.8, side=1, line=2)
+  boxplot(acido_citrico, col="slategray2", pch=19)
+  mtext("acido_citrico", cex=0.8, side=1, line=2)
+  boxplot(acucar_residual, col="slategray2", pch=19)
+  mtext("acucar_residual", cex=0.8, side=1, line=2)
+  boxplot(cloretos, col="slategray2", pch=19)
+  mtext("cloretos", cex=0.8, side=1, line=2)
+  boxplot(fsd, col="slategray2", pch=19)
+  mtext("fsd", cex=0.8, side=1, line=2)
+
+```
+
+
+
+```{r, , echo=FALSE}
+
+par(mfrow=c(1,5), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
+  boxplot(tsd, col="slategray2", pch=19)
+  mtext("tsd" , cex=0.8, side=1, line=2)
+  boxplot(densidade, col="slategray2", pch=19)
+  mtext("densidade", cex=0.8, side=1, line=2)
+  boxplot(PH, col="slategray2", pch=19)
+  mtext("PH", cex=0.8, side=1, line=2)
+  boxplot(sulfatos, col="slategray2", pch=19)
+  mtext("sulfatos", cex=0.8, side=1, line=2)
+  boxplot(grau_alcolico, col="slategray2", pch=19)
+  mtext("grau_alcolico", cex=0.8, side=1, line=2)
+  
+```
+
+Nota se que todas as variáveis possuem outliers e para uma melhor acurácia no modelo iremos removê-las da análise inicial 
+
+
+```{r}
+
+#criando uma funcao para remover os outliers das colunas 
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+
+```
