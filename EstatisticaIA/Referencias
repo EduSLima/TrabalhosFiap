@@ -1,0 +1,20 @@
+analise de ambos os vinhos 
+https://rpubs.com/Daria/57835
+https://rpubs.com/Bilal_Mahmood/EDA
+
+red wine
+https://github.com/sagarnildass/Red-Wine-Data-Analysis-by-R/blob/master/redWineAnalysis.Rmd
+
+analise exploratoria 
+https://sriramjaju.github.io/2017-09-10-EDA-RedWine/
+https://www.kaggle.com/sagarnildass/red-wine-analysis-by-r
+
+
+video interessante para analise e remocao dos outliers
+https://www.youtube.com/watch?v=slquYX4-dMc
+
+
+Maneira interessante de mostrar as variaveis 
+parallel cordinates
+    https://www.r-graph-gallery.com/93-parrallel-plot/
+    https://cran.r-project.org/web/packages/cdparcoord/vignettes/cdparcoord.html

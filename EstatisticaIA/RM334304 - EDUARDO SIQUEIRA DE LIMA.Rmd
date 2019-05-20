@@ -127,3 +127,4 @@ grid.arrange(grafico_1, grafico_2, ncol=2)
 ```
 
 
+Observa-se que as qualidades dos vinhos se encontram em uma distribuição normal
