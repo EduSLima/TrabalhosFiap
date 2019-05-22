@@ -208,7 +208,7 @@ Para elucidar a aplicação do método vamos analisar a variavel **"Acidez Fixa"
 
 ```
 
-De modo que a remoção dos outliers fez com que a distribuição dos dados ficasse mais homogenea como demonstro nos histrogramas a seguir
+De modo que a remoção dos outliers fez com que a distribuição dos dados ficasse mais homogênea como demonstro nos histrogramas a seguir
 
 ```{r }
 
