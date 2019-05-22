@@ -80,7 +80,7 @@ vinhos <- read_csv2("./DataSets/BaseWine_Red_e_White.csv" ,col_names = nome_colu
 ```
 
 
-Adicionando uma classificação de bom ou ruim de acordo com sua nota, onde menor que 5 é ruim até 7 bom e acima disso excelentte
+Adicionando uma classificação de bom ou ruim de acordo com sua nota, onde menor que 5 é ruim até 7 bom e acima disso excelente
 
 ```{r}
 
@@ -106,7 +106,7 @@ attach(vinhos)
 #demonstrando as quantidades de dimensoes de ambos datasets
 
 dim(vinhos)
-skim(vinhos)
+skim(vinhos[, names(vinhos) != "id"] ) #retirando a coluna ID da análise
 str(vinhos)
 head (vinhos,3)
 
@@ -127,8 +127,9 @@ grid.arrange(grafico_1, grafico_2, ncol=2)
 
 Observa-se que as qualidades dos vinhos se encontram em uma distribuição normal. Sabe-se que a maior concentração de notas está na regão entre nota 4 e 8. Entretando, antes de aprofundarmos em qualquer análise que envolvem os dados é necessário pontuar se há existencia de outliers e remove-los caso existam
 
-O comando aplicado para todos atributos abaixo exibição dos box-plot abaixo foi:
-> *boxplot(Column_Name, col="slategray2", pch=19) * <br />
+O comando aplicado para todos atributos abaixo exibição dos box-plot abaixo foi: <br />
+
+> *boxplot(Column_Name, col="slategray2", pch=19) *  <br />
 > *mtext("Titulo" , cex=0.8, side=1, line=2)*
 
 ```{r, , echo=FALSE}
@@ -146,7 +147,6 @@ par(mfrow=c(1,6), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
   mtext("cloretos", cex=0.8, side=1, line=2)
   boxplot(fsd, col="slategray2", pch=19)
   mtext("fsd", cex=0.8, side=1, line=2)
-  
   
 
 ```
@@ -169,6 +169,8 @@ par(mfrow=c(1,5), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
   
 ```
 
+### **Outliers**
+
 Nota se que quase  todas as variáveis possuem outliers e para uma melhor acurácia no modelo iremos removê-las da análise.
 O Metodo mais indicado para remoção dos outliers é amplitude interquartil (IQR - InterQuantile Range) onde:
   *IQR  = Q3(quartil 3) - Q1(quartil 1)
@@ -178,32 +180,32 @@ Com o IQR calculado é necessário definir o limite inferior e superior que é d
   
   $$Lim_{Inf} = \bar{X} - 1,5  * IQR$$
 
-Para elucidar a aplicação do método vamos analisar a variavel **"Acidez Volátil"** notamos que há muitos valores acima do Q3 a uns poucos abaixo de Q1, Oserve o sumário desta variavel
+Para elucidar a aplicação do método vamos analisar a variavel **"Acidez Fixa"** notamos que há muitos valores acima do Q3 a uns poucos abaixo de Q1, Oserve o sumário desta variavel
 
 ```{r }
 
-  skim(acidez_volatil)
+  skim(acidez_fixa)
 
-  #dado p25(Q1) = 0.23 e p75(Q3) = 0.4 temos:
-  IQR_Acidez_Volatil =0.4 -0.23
+  #dado p25(Q1) = 6.4 e p75(Q3) = 7.7 temos:
+  IQR_Acidez_Volatil =7.7 - 6.4
   
   #como resultado temos 1.3 
   #com isso podemos definir os limites superior e inferior do range
-  LS_Acidez_Volatil = 0.4 +1.5 * IQR_Acidez_Volatil
-  LI_Acidez_Volatil = 0.23 -(1.5 * IQR_Acidez_Volatil)
+  
+  LS_acidez_fixa = 7.7 +  1.5 * IQR_Acidez_Volatil
+  LI_acidez_fixa = 6.4 - (1.5 * IQR_Acidez_Volatil)
   
   #temos um limite superior de -0.025 e inferior de 0.655 onde as observações acima ou abaixo desses fatores serão consideradas outilers
   #com base nos limites encontrados farei um sub set do conjunto origi nal de dados levando em consideracao os limites encontrados
-  Vinhos_Normalizado <-filter(vinhos, acidez_volatil >= LI_Acidez_Volatil & acidez_volatil <= LS_Acidez_Volatil)
+  Vinhos_Normalizado <-filter(vinhos, acidez_fixa >= LI_acidez_fixa & acidez_fixa <= LS_acidez_fixa)
   
   #comparando os resultados
   par(mfrow=c(1,2), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-    boxplot(acidez_volatil, col="slategray2", pch=19)
+    boxplot(acidez_fixa, col="slategray2", pch=19)
     mtext("Antes" , cex=0.8, side=1, line=2)
-    boxplot(Vinhos_Normalizado$acidez_volatil, col="slategray2", pch=19)
+    boxplot(Vinhos_Normalizado$acidez_fixa, col="slategray2", pch=19)
     mtext("Depois" , cex=0.8, side=1, line=2)
 
-  
 ```
 
 De modo que a remoção dos outliers fez com que a distribuição dos dados ficasse mais homogenea como demonstro nos histrogramas a seguir
@@ -212,9 +214,9 @@ De modo que a remoção dos outliers fez com que a distribuição dos dados fica
 
   #comparando os resultados
   par(mfrow=c(1,2), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-    hist(acidez_volatil, col="slategray2", main = "")
+    hist(acidez_fixa, col="slategray2", main = "")
     mtext("Antes" , cex=0.8, side=1, line=2)
-    hist(Vinhos_Normalizado$acidez_volatil, col="slategray2", main = "")
+    hist(Vinhos_Normalizado$acidez_fixa, col="slategray2", main = "")
     mtext("Depois" , cex=0.8, side=1, line=2)
 
 ```
