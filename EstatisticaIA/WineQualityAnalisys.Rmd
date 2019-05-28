@@ -226,6 +226,9 @@ Para automatizar o processo de analise e remoção dos outliers criamos uma fun�
 
 ```{r , results="hide"}
 
+
+
+
 #criando uma funcao para remover os outliers das colunas 
 remove_outliers <- function(x, na.rm = TRUE, ...) {
   qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
@@ -237,7 +240,7 @@ remove_outliers <- function(x, na.rm = TRUE, ...) {
 }
 
 vinhos$acidez_fixa <- remove_outliers(acidez_fixa, T)
-teste <- remove_outliers(acidez_volatil)
+vinhos$acidez_volatil <- remove_outliers(acidez_volatil)
 vinhos$acido_citrico <- remove_outliers(acido_citrico, T)
 vinhos$acucar_residual <- remove_outliers(acucar_residual, T)
 vinhos$cloretos <- remove_outliers(cloretos, T)
