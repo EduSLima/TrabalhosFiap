@@ -58,9 +58,40 @@ boxplot(Vinhos.RAW$qualidade)         ; mtext("qualidade" , cex=0.8, side=1, lin
 #claramente é engano nao existe teor alcolico menor que 11 para vinhos 
 boxplot.stats(Vinhos.RAW$grau_alcolico)$out  
 vinhos_clean <-subset(Vinhos.RAW,grau_alcolico >2)
+vinhos_clean <-subset(vinhos_clean,densidade < 1.01030)
+vinhos_clean <-subset(vinhos_clean,id != 385)   #qualidade == 3 & fsd > 250)
+vinhos_clean <-subset(vinhos_clean,id != 2488)   #qualidade ==6 & acido_citrico > 1.3) 
+vinhos_clean <-subset(vinhos_clean,sulfatos < 1.8) 
+
+#esses prints do infero dão uma visão de como os dados estão distribuidos em relação a variavel qualidade
+attach(vinhos_clean)
+par (mfrow=c(4,3))
+plot(acidez_fixa,qualidade, main="Acidez Fixa", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ acidez_fixa))
+plot(acidez_volatil,qualidade, main="Acidez Volatil", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ acidez_volatil))
+plot(acido_citrico,qualidade, main="Acido Citrico", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ acido_citrico))
+plot(acucar_residual,qualidade, main="Acucar Residual", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ acucar_residual))
+plot(cloretos,qualidade, main="Cloreto", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ cloretos))
+plot(fsd,qualidade, main="fsd", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ fsd))
+plot(tsd,qualidade, main="tsd", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ tsd))
+plot(densidade,qualidade, main="densidade", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ densidade))
+plot(PH,qualidade, main="PH", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ PH))
+plot(sulfatos,qualidade, main="Sulfatos", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ sulfatos))
+plot(grau_alcolico,qualidade, main="Grau Alcolico", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ grau_alcolico))
 
 
 
+summary(vinhos_clean)
 
 boxplot.stats(Vinhos.RAW$acidez_fixa)$out
 boxplot.stats(Vinhos.RAW$acidez_volatil)$out 
@@ -74,4 +105,28 @@ boxplot.stats(Vinhos.RAW$PH)$out
 boxplot.stats(Vinhos.RAW$sulfatos)$out       
 
 
-  
+
+par (mfrow=c(1,1))
+plot(sulfatos,qualidade, main="Sulfatos", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+
+
+mat_cor <-cor(vinhos_clean[2:12])
+corrplot::corrplot(mat_cor, method="number", order="hclust")
+
+
+
+
+par (mfrow=c(1,1))
+plot(grau_alcolico,qualidade, main="Teor Alcoolico", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+abline(lm(qualidade ~ grau_alcolico))
+
+plot(qualidade,acidez_fixa, main="Acidez Fixa", col=rgb(0,100,0,50,maxColorValue=255), pch=16)
+
+
+ggplot(data = vinhos_clean, mapping = aes(x = qualidade  , y = tipo )) + 
+  geom_point()
+
+
+ggplot(data = vinhos_clean, mapping = aes(x = tipo, y = qualidade)) +  geom_boxplot()
+ggplot(data = vinhos_clean) +   geom_point(mapping = aes(x = grau_alcolico, y = densidade), alpha = 1 / 100)
+ggplot(data = vinhos_clean) +  geom_hex(mapping = aes(x = grau_alcolico, y = densidade))

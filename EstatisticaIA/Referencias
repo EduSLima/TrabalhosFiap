@@ -1,10 +1,16 @@
+
 analise de ambos os vinhos 
+https://github.com/henriquebraga/wine-analysis
+https://www.linkedin.com/pulse/data-science-an%C3%A1lise-de-regress%C3%A3o-linear-aplicado-vendas-fernandes/
+
 https://rpubs.com/Daria/57835
 https://rpubs.com/Bilal_Mahmood/EDA
 https://www.kaggle.com/sgus1318/wine-quality-exploration-and-analysis
 https://rstudio-pubs-static.s3.amazonaws.com/142451_096eafe187b34ade916fcbe10bb432b2.html
 https://zangsir.weebly.com/winequality-data.html
 https://jstevenr.com/wine-classification.html
+https://www.engineeringbigdata.com/white-wine-quality-analysis-with-regression-and-model-trees-in-r/
+https://rpubs.com/Mohit_kumar_5522/397893
 
 analise multivariada dos dados 
 https://little-book-of-r-for-multivariate-analysis.readthedocs.io/en/latest/src/multivariateanalysis.html
@@ -49,3 +55,8 @@ https://rstudio-pubs-static.s3.amazonaws.com/240657_5157ff98e8204c358b2118fa6916
 
 ANALISE BEM LEGAL IREI USAR COMO REFERENCIA 
 http://lukaloncar.com/project-01-predicting-wine-quality-based-on-physicochemical-test-data-2/
+
+
+
+REMOCAO DE OUTLIERS 
+https://towardsdatascience.com/a-brief-overview-of-outlier-detection-techniques-1e0b2c19e561

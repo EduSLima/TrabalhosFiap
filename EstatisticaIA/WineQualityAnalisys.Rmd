@@ -22,7 +22,7 @@ Inicicalmente vamos instalar os pacotes, caso seja necessário, que serão usado
 options(warn =-1)
 
 #lista de pacotes que iremos utilizar no projeto
-Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally")
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally","gmodels")
 
 #com base nos pacotes instalados crio uma variavel somente com os pacotes que não temos ainda para realizar a instalação 
 #dos pacotes que de fato não possuimos
@@ -112,20 +112,49 @@ head (vinhos,3)
 
 ```
 
+Observa-se que:
 
-Distribuição da Qualidade do Vinho por tipo de vinho e classificação
+* O campo `acucar_residual` e `fsd` possuem um desvio padrão acima das demais variaveis
+* A maioria dos histogramas apresenta uma distribuição normal entretanto não centralizado o que pode indicar a presença de outliers
+
+
+
+### Verificando valores nulos
+
+```{r}
+sapply(vinhos, function(x)all(is.na(x)))
+````
+
+O resultado acima nos descreve que não há presença de nulos na base, isto é indicado pelo retorno `FALSE` em cada variável
+
 
 ```{r}
 
-grafico_1 <- qplot(qualidade, data = vinhos, fill = tipo, binwidth = 1)  
-grafico_2 <- qplot(qualidade, data = vinhos, fill = rating, binwidth = 1) 
+Rotulos_Colunas <-c("id","acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+                    "PH","sulfatos","grau alcolico","qualidade","tipo")
 
-grid.arrange(grafico_1, grafico_2, ncol=2)
+grafico_lista <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:13){
+  grafico_lista[[i-1]] <- plot_ly(x = as.formula(vinhos[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+subplot(grafico_lista,  nrows = 4)
+
 
 ```
 
 
-Observa-se que as qualidades dos vinhos se encontram em uma distribuição normal. Sabe-se que a maior concentração de notas está na regão entre nota 4 e 8. Entretando, antes de aprofundarmos em qualquer análise que envolvem os dados é necessário pontuar se há existencia de outliers e remove-los caso existam
+
+Podemos observar que apesar do desenho ser similar à uma distribuição normal, isso se deu pois mais à esquerda exceto grau alcoolico, que se sabe
+que não há vinhos com teor alcoolico abaixo de 6.5% (levendo em consideração um vinho de sobremesa mais licoroso). portanto nosso proximo objeto de
+estudo será o grau alcoolico a procura de outliers e a remoção dos mesmos.
+
+
+
+
+
+
+
 
 O comando aplicado para todos atributos abaixo exibição dos box-plot abaixo foi: <br />
 
@@ -258,12 +287,7 @@ Examinando os dados pos limpeza dos outliers
 
 ```{r}
 
-par(mfrow=c(1,2), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-  boxplot(acidez_volatil, col="slategray2", pch=19)
-  mtext("Acidez Volatil", cex=0.8, side=1, line=2)
-  boxplot(teste, col="slategray2", pch=19)
-  mtext("teste", cex=0.8, side=1, line=2)
-  
-  
+
+
   
 ```
