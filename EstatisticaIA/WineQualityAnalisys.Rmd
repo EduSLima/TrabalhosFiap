@@ -210,47 +210,23 @@ Após a remoção do erro na coluna `grau_alcoolico` os dados se demosntraram me
 ser melhor analisados
 
 
-O comando aplicado para todos atributos abaixo exibição dos box-plot abaixo foi: <br />
+Antes de aprofundar a análise, achamos interessante avaliar o comportamento de cada variável agrupada por Tipo de Vinho. 
+abaixo teremos um agrupamento por tipo de vinho mostrando a media, mediana e o desvio padrão
 
-> *boxplot(Column_Name, col="slategray2", pch=19) *  <br />
-> *mtext("Titulo" , cex=0.8, side=1, line=2)*
+``` {r}
 
-```{r, , echo=FALSE}
-
-par(mfrow=c(1,6), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-  boxplot(acidez_fixa, col="slategray2", pch=19)
-  mtext("Acidez Fixa" , cex=0.8, side=1, line=2)
-  boxplot(acidez_volatil, col="slategray2", pch=19)
-  mtext("Acidez Volatil", cex=0.8, side=1, line=2)
-  boxplot(acido_citrico, col="slategray2", pch=19)
-  mtext("acido_citrico", cex=0.8, side=1, line=2)
-  boxplot(acucar_residual, col="slategray2", pch=19)
-  mtext("acucar_residual", cex=0.8, side=1, line=2)
-  boxplot(cloretos, col="slategray2", pch=19)
-  mtext("cloretos", cex=0.8, side=1, line=2)
-  boxplot(fsd, col="slategray2", pch=19)
-  mtext("fsd", cex=0.8, side=1, line=2)
-  
+aggregate(vinhos_ajustado[,-13],  by = list(vinhos_ajustado$tipo),  FUN = mean)
+aggregate(vinhos_ajustado[,-13],  by = list(vinhos_ajustado$tipo),  FUN = median)
+aggregate(vinhos_ajustado[,-13],  by = list(vinhos_ajustado$tipo),  FUN = sd)
 
 ```
 
+Notamos que há bastante diferença entre algumas variaveis como :
+  * acidez fixa, volatil, cloretos e sultatos é maior em vinhos tintos,  <----- montar uma matriz
+  * acido citrico, acucar residual, fsd e tsd é muito maior em vinhos brancos
 
+devido ao comportamento particular de cada tipo de vinho pensamos que é interessante efetuar a análise dos dados de maneira independente
 
-```{r, , echo=FALSE}
-
-par(mfrow=c(1,5), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-  boxplot(tsd, col="slategray2", pch=19)
-  mtext("tsd" , cex=0.8, side=1, line=2)
-  boxplot(densidade, col="slategray2", pch=19)
-  mtext("densidade", cex=0.8, side=1, line=2)
-  boxplot(PH, col="slategray2", pch=19)
-  mtext("PH", cex=0.8, side=1, line=2)
-  boxplot(sulfatos, col="slategray2", pch=19)
-  mtext("sulfatos", cex=0.8, side=1, line=2)
-  boxplot(grau_alcolico, col="slategray2", pch=19)
-  mtext("grau_alcolico", cex=0.8, side=1, line=2)
-  
-```
 
 ### **Outliers**
 
@@ -287,19 +263,6 @@ Para elucidar a aplicação do método vamos analisar a variavel **"Acidez Fixa"
     boxplot(acidez_fixa, col="slategray2", pch=19)
     mtext("Antes" , cex=0.8, side=1, line=2)
     boxplot(Vinhos_Normalizado$acidez_fixa, col="slategray2", pch=19)
-    mtext("Depois" , cex=0.8, side=1, line=2)
-
-```
-
-De modo que a remoção dos outliers fez com que a distribuição dos dados ficasse mais homogênea como demonstro nos histrogramas a seguir
-
-```{r }
-
-  #comparando os resultados
-  par(mfrow=c(1,2), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
-    hist(acidez_fixa, col="slategray2", main = "")
-    mtext("Antes" , cex=0.8, side=1, line=2)
-    hist(Vinhos_Normalizado$acidez_fixa, col="slategray2", main = "")
     mtext("Depois" , cex=0.8, side=1, line=2)
 
 ```
