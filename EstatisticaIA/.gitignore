@@ -1,6 +1,6 @@
 # Don't track content of these folders
 node_modules/
-someOtherfoler/
+WineQualityAnalisys_files/
 
 
 # Compiled source #
@@ -30,4 +30,6 @@ someOtherfoler/
 *.png
 *.doc
 *.pdf
+*.Rhistory
+*.jpeg
 

@@ -1,8 +1,6 @@
 ---
 title: "ANALISE DO DATASET WINE QUALITY"
-output:
-  word_document: default
-  pdf_document: default
+
 ---
 
 ###  **"Conceitos Estatísticos para IA"**  
@@ -24,7 +22,7 @@ Inicicalmente vamos instalar os pacotes, caso seja necessário, que serão usado
 options(warn =-1)
 
 #lista de pacotes que iremos utilizar no projeto
-Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally","gmodels")
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally","gmodels","ggpubr")
 
 #com base nos pacotes instalados crio uma variavel somente com os pacotes que não temos ainda para realizar a instalação 
 #dos pacotes que de fato não possuimos
@@ -37,7 +35,9 @@ if(length(PacotesNovos)){ install.packages(PacotesNovos)} else {print("Todos os 
 
 Carregando todas as as Bibliotecas mencionadas no passo anterior
 ```{r, results="hide"}
+
 lapply(Pacotes_Necessarios, require, character.only = TRUE)
+
 ```
 
 
@@ -90,8 +90,8 @@ Adicionando uma classificação de bom ou ruim de acordo com sua nota, onde meno
 
 #vinhos$tipo <- factor(vinhos$tipo, ordered = T)
 
-vinhos$VinhoBranco <- (ifelse(vinhos$tipo =='WHITE',1,0))
-vinhos$VinhoTinto <- (ifelse(vinhos$tipo =='RED',1,0))
+#vinhos$VinhoBranco <- (ifelse(vinhos$tipo =='WHITE',1,0))
+#vinhos$VinhoTinto <- (ifelse(vinhos$tipo =='RED',1,0))
 
 
 
@@ -185,20 +185,20 @@ plot_ly(y = grau_alcolico, type = "box", name = 'Teor Alcoolico')
 
 Parece que existem elementos que nos levam a crer que de fato não são condizentes com o minimo de teor alcoolico existente para vinhos
 iremos analisar melhor as observações onde o teor alcoolico é menor que 6º
-``` {r}
+```{r}
 
 subset(vinhos, grau_alcolico <6)
 
-````
+```
 
 
 Olhando a tabela percebmos que existem 4 observações para vinho tinto que nos parecem ser erros de digitação iremos criar a partir deste momento um novo
 data frame para trabalhar a limpeza dos dados preservando o original por questões de segurança e em seguida imprimiremos os graficos novamente para a variavel grau alcoolico
 
 
-``` {r}
+```{r}
 
-vinhos_ajustado <- subset(vinhos, grau_alcolico > 6)
+vinhos_ajustado <- subset(vinhos[-1], grau_alcolico > 6)
 
 grafico_lista <- vector("list", length = 2)
 
@@ -207,16 +207,81 @@ grafico_lista[[2]] <-  plot_ly(y = vinhos_ajustado$grau_alcolico, type = "box", 
 
 subplot(grafico_lista,  nrows = 1)
 
-````
+```
 
 Após a remoção do erro na coluna `grau_alcoolico` os dados se demosntraram melhores dispostos no entanto ainda há indicios que existam outliers que devem 
 ser melhor analisados
 
 
+
+Iremos aplicar o metodo de pearson para avaliar se há correlações presentes com nossa variavel alvo que é qualidade.
+
+```{r}
+
+#ggpairs(vinhos_ajustado)
+  pf <- ggcorr(vinhos_ajustado, method = c("everything", "pearson")) 
+  pt <- ggcorr(subset(vinhos_ajustado, tipo=="RED"), method = c("everything", "pearson")) 
+  pb <- ggcorr(subset(vinhos_ajustado, tipo!="RED"), method = c("everything", "pearson")) 
+  
+  ggarrange(pf,                                                 
+          ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco")), 
+          nrow = 2, 
+          labels = "Todos os Tipos de Vinho"                                       
+          ) 
+```
+
+
+Nota-se através do grafico de corelação que a priori temos uma correlação de Teor alcoolico, densidade, cloretos, acido e acidez volatil mais relativas com Qualidade
+iremos traçar graficos para comprovar nossa tese
+
+
+```{r}
+
+
+
+  pf <- qplot( qualidade, grau_alcolico,data=vinhos_ajustado)+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+  pt <- qplot( qualidade, grau_alcolico,data=subset(vinhos_ajustado, tipo=="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+  pb <- qplot( qualidade, grau_alcolico,data=subset(vinhos_ajustado, tipo!="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+
+  
+  ggarrange(pf,                                                 
+          ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco")), 
+          nrow = 2, 
+          labels = "Todos os Tipos de Vinho"                                       
+          ) 
+  
+  
+  pf <- qplot( qualidade, acidez_fixa,data=vinhos_ajustado)+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+  pt <- qplot( qualidade, acidez_fixa,data=subset(vinhos_ajustado, tipo=="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+  pb <- qplot( qualidade, acidez_fixa,data=subset(vinhos_ajustado, tipo!="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+
+  
+  ggarrange(pf,                                                 
+          ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco")), 
+          nrow = 2, 
+          labels = "Todos os Tipos de Vinho"                                       
+          ) 
+
+  
+  pf <- qplot( qualidade, acucar_residual,data=vinhos_ajustado)+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+  pt <- qplot( qualidade, acucar_residual,data=subset(vinhos_ajustado, tipo=="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+  pb <- qplot( qualidade, acucar_residual,data=subset(vinhos_ajustado, tipo!="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+
+  
+  ggarrange(pf,                                                 
+          ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco")), 
+          nrow = 2, 
+          labels = "Todos os Tipos de Vinho"                                       
+          ) 
+
+
+```
+
+
 Antes de aprofundar a análise, achamos interessante avaliar o comportamento de cada variável agrupada por Tipo de Vinho. 
 abaixo teremos um agrupamento por tipo de vinho mostrando a media, mediana e o desvio padrão
 
-``` {r}
+```{r}
 
 aggregate(vinhos_ajustado[,-13],  by = list(vinhos_ajustado$tipo),  FUN = mean)
 aggregate(vinhos_ajustado[,-13],  by = list(vinhos_ajustado$tipo),  FUN = median)
@@ -310,7 +375,7 @@ Examinando os dados pos limpeza dos outliers
 
 
   
-<<<<<<< HEAD
+
 
 #Criando uma coluna de Ranking para dizer o quão bom é o vinho
 #vinhos$rating <- factor(ifelse(vinhos$qualidade <= 5, 'Ruim', ifelse(vinhos$qualidade <= 7, 'Bom', 'Excelente')))
@@ -319,6 +384,4 @@ Examinando os dados pos limpeza dos outliers
   
   
 ```
-=======
-```
->>>>>>> 4705d21d27c2c900c0817f5855405411c3504e8d
+
