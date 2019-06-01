@@ -85,10 +85,13 @@ Adicionando uma classificação de bom ou ruim de acordo com sua nota, onde meno
 ```{r}
 
 #converte tipo paara fator
-vinhos$tipo <- factor(vinhos$tipo, ordered = T)
 
-#Criando uma coluna de Ranking para dizer o quão bom é o vinho
-vinhos$rating <- factor(ifelse(vinhos$qualidade <= 5, 'Ruim', ifelse(vinhos$qualidade <= 7, 'Bom', 'Excelente')))
+#vinhos$tipo <- factor(vinhos$tipo, ordered = T)
+
+vinhos$VinhoBranco <- (ifelse(vinhos$tipo =='WHITE',1,0))
+vinhos$VinhoTinto <- (ifelse(vinhos$tipo =='RED',1,0))
+
+
 
 ```
 
@@ -260,6 +263,13 @@ par(mfrow=c(1,2), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
   mtext("Acidez Volatil", cex=0.8, side=1, line=2)
   boxplot(teste, col="slategray2", pch=19)
   mtext("teste", cex=0.8, side=1, line=2)
+  
+  
+  
+
+#Criando uma coluna de Ranking para dizer o quão bom é o vinho
+#vinhos$rating <- factor(ifelse(vinhos$qualidade <= 5, 'Ruim', ifelse(vinhos$qualidade <= 7, 'Bom', 'Excelente')))
+
   
   
   
