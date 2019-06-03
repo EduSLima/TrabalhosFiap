@@ -1,0 +1,75 @@
+---
+title: "ANALISE DO DATASET WINE QUALITY - VINHO BRANCO"
+output: html_notebook
+---
+
+
+Como analisado anteriormente, esta parte do trabalho visa realizar a análise do dataset WineQuality contudo será um estudo direcionado ao Vinho Tinto
+
+```{r}
+
+#criando um data set para vinho Tinto
+vinho_branco <-(subset(vinhos_ajustado, tipo!="RED"))
+
+```
+
+
+Análise da Distribuição dos dados para o Vinho Tinto:
+
+```{r}
+
+  
+
+attach(vinho_branco)
+
+Modelo_01 <- lm(qualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd)
+summary(Modelo_01)
+
+# selecionando variáveis por método automático
+
+stepwise<-step(Modelo_01,direction="both")
+ 
+stepwise
+summary(stepwise)
+
+modelo_final<-lm(formula = qualidade ~ acidez_fixa + acidez_volatil + acucar_residual +     densidade + fsd + grau_alcolico + PH + sulfatos)
+modelo_predito <-predict(modelo_final,interval = "prediction", level = 0.95) 
+
+fix(modelo_predito)
+
+
+# intervalo de confianca - grafico para media
+fit   <- modelo_predito[,1] # valores preditos
+lower <- modelo_predito[,2] # limite inferior
+upper <- modelo_predito[,3] # limite superior
+
+
+
+mse <- mean((vinho_branco$qualidade - fit)^2)
+sqrt(mse)
+
+erro_usando_media <- mean((vinho_branco$qualidade - mean(vinho_branco$qualidade))^2)
+sqrt(erro_usando_media)
+
+
+# grafico residuo
+rs <- resid(modelo_final)
+plot(predict(modelo_final), rs, xlab = "Preditor linear",ylab = "Residuos")
+abline(h = 0, lty = 2)
+
+
+#observa-se SE violação da suposição de que os erros aleatórios têm distribuição Normal
+  
+qqnorm(residuals(modelo_final), ylab="Resíduos",xlab="Quantis teóricos",main="")
+qqline(residuals(modelo_final))
+
+#Teste de Normalidade de Shapiro Wilk
+
+# sE Valor P do teste é pequeno, rejeita-se a hipótese de normalidade dos resíduos e,
+# por consequência, conclui-se que os erros não são normalmente distribuídos.
+
+shapiro.test(residuals(modelo_final))
+
+```
+
+

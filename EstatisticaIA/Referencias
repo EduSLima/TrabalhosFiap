@@ -69,3 +69,104 @@ https://towardsdatascience.com/a-brief-overview-of-outlier-detection-techniques-
 
 https://plot.ly/r/box-plots/
 >>>>>>> 4705d21d27c2c900c0817f5855405411c3504e8d
+
+
+
+
+PARTE DO CODIGO ANTIGO ... VAI QUE USA TIREI DE LA E DX AQUI 
+ACHO POUCO PROVAVEL QUE ALGUEM ALEM DE MIM LEIA ISSO ... ENTRETANTO SE VC LEU E NAO SOU EU ... PARABENS ... 
+
+/*
+
+
+### **Outliers**
+
+Nota se que quase  todas as variáveis possuem outliers e para uma melhor acurácia no modelo iremos removê-las da análise.
+O Metodo mais indicado para remoção dos outliers é amplitude interquartil (IQR - InterQuantile Range) onde:
+  *IQR  = Q3(quartil 3) - Q1(quartil 1)
+Com o IQR calculado é necessário definir o limite inferior e superior que é dado pela seguinte formula:
+
+  $$Lim_{Sup} = \bar{X} + 1,5  * IQR$$
+  
+  $$Lim_{Inf} = \bar{X} - 1,5  * IQR$$
+
+Para elucidar a aplicação do método vamos analisar a variavel **"Acidez Fixa"** notamos que há muitos valores acima do Q3 a uns poucos abaixo de Q1, Oserve o sumário desta variavel
+
+```{r }
+
+  skim(acidez_fixa)
+
+  #dado p25(Q1) = 6.4 e p75(Q3) = 7.7 temos:
+  IQR_Acidez_Volatil =7.7 - 6.4
+  
+  #como resultado temos 1.3 
+  #com isso podemos definir os limites superior e inferior do range
+  
+  LS_acidez_fixa = 7.7 +  1.5 * IQR_Acidez_Volatil
+  LI_acidez_fixa = 6.4 - (1.5 * IQR_Acidez_Volatil)
+  
+  #temos um limite superior de -0.025 e inferior de 0.655 onde as observações acima ou abaixo desses fatores serão consideradas outilers
+  #com base nos limites encontrados farei um sub set do conjunto origi nal de dados levando em consideracao os limites encontrados
+  Vinhos_Normalizado <-filter(vinhos, acidez_fixa >= LI_acidez_fixa & acidez_fixa <= LS_acidez_fixa)
+  
+  #comparando os resultados
+  par(mfrow=c(1,2), oma = c(1,1,0,0) + 0.1,  mar = c(3,3,1,1) + 0.1)
+    boxplot(acidez_fixa, col="slategray2", pch=19)
+    mtext("Antes" , cex=0.8, side=1, line=2)
+    boxplot(Vinhos_Normalizado$acidez_fixa, col="slategray2", pch=19)
+    mtext("Depois" , cex=0.8, side=1, line=2)
+
+```
+
+
+Para automatizar o processo de analise e remoção dos outliers criamos uma função para executar essa tarefa, e segue:
+
+```{r , results="hide"}
+
+
+
+
+#criando uma funcao para remover os outliers das colunas 
+remove_outliers <- function(x, na.rm = TRUE, ...) {
+  qnt <- quantile(x, probs=c(.25, .75), na.rm = na.rm, ...)
+  H <- 1.5 * IQR(x, na.rm = na.rm)
+  y <- x
+  y[x < (qnt[1] - H)] <- NA
+  y[x > (qnt[2] + H)] <- NA
+  y
+}
+
+vinhos$acidez_fixa <- remove_outliers(acidez_fixa, T)
+vinhos$acidez_volatil <- remove_outliers(acidez_volatil)
+vinhos$acido_citrico <- remove_outliers(acido_citrico, T)
+vinhos$acucar_residual <- remove_outliers(acucar_residual, T)
+vinhos$cloretos <- remove_outliers(cloretos, T)
+vinhos$fsd <- remove_outliers(fsd, T)
+vinhos$tsd <- remove_outliers(tsd, T)
+vinhos$densidade <- remove_outliers(densidade, T)
+vinhos$PH <- remove_outliers(PH, T)
+vinhos$sulfatos <- remove_outliers(sulfatos, T)
+vinhos$grau_alcolico <- remove_outliers(grau_alcolico, T)
+vinhos$qualidade <- remove_outliers(qualidade, T)
+
+```
+
+Examinando os dados pos limpeza dos outliers
+
+```{r}
+
+
+
+  
+
+
+#Criando uma coluna de Ranking para dizer o quão bom é o vinho
+#vinhos$rating <- factor(ifelse(vinhos$qualidade <= 5, 'Ruim', ifelse(vinhos$qualidade <= 7, 'Bom', 'Excelente')))
+
+  
+  
+  
+```
+
+
+*/
