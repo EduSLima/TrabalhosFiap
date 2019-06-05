@@ -22,7 +22,7 @@ Inicicalmente vamos instalar os pacotes, caso seja necessário, que serão usado
 options(warn =-1)
 
 #lista de pacotes que iremos utilizar no projeto
-Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally","gmodels","ggpubr")
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally","gmodels","ggpubr","caTools","caret")
 
 #com base nos pacotes instalados crio uma variavel somente com os pacotes que não temos ainda para realizar a instalação 
 #dos pacotes que de fato não possuimos
@@ -80,23 +80,6 @@ vinhos <- read_csv2("./DataSets/BaseWine_Red_e_White.csv" ,col_names = nome_colu
 
 
 ```
-
-
-Adicionando uma classificação de bom ou ruim de acordo com sua nota, onde menor que 5 é ruim até 7 bom e acima disso excelente
-
-```{r}
-
-#converte tipo paara fator
-
-#vinhos$tipo <- factor(vinhos$tipo, ordered = T)
-
-#vinhos$VinhoBranco <- (ifelse(vinhos$tipo =='WHITE',1,0))
-#vinhos$VinhoTinto <- (ifelse(vinhos$tipo =='RED',1,0))
-
-
-
-```
-
 
 
 Exibindo os dados das dimensões, sumário, estrutura e as primeiras linhas do DataFrame Vinhos
