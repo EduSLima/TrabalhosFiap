@@ -14,8 +14,6 @@ vinho_tinto <-(subset(vinhos_ajustado, tipo=="RED"))
 ```
 
 
-
-
 Mais uma vez iremos analisar as correlações existentes para o vinho Tinto, para isso iremos utilizar o metodo de speraman para analise de correlações em todas as observações de vinho tinto
 
 
@@ -165,7 +163,7 @@ rpart, tal como nas árvores de decisão.
 
 Neste modelo, temos como variável dependente o campo `Qualidade` e independente todo o restante de variáveis.
 
-```{r 17}
+```{r }
 
 #minermonico RT(regression tree) usado para distinguir os modelos aplicados
 
@@ -176,7 +174,7 @@ rpart.plot(RT_Modelo_01, digits = 9, fallen.leaves = TRUE, box.palette="RdBu", s
 
 ### Análise da Qualidade do Modelo (Matriz de Confusão)
 
-```{r 18}
+```{r }
 
 RT_preditor <- predict(RT_Modelo_01, newdata = vt_teste)
 RT_Valores_Corte <- as.factor(ifelse(RT_preditor > 6,1,0))
@@ -185,3 +183,91 @@ confusionMatrix(RT_Valores_Corte, vt_teste$GrupoQualidade)
 ```
 
 O Modelo apresentado acima teve um desepenho melhor que Regressão Linera obtendo `82%` de acuracia. Observamos que a variavel Grau Alcoolico é a variavel que possui o maior peso pois ela está no node mais alto da arvore.
+
+
+
+## Modelo 3: Árvore de Decisão
+
+### Técnica
+
+É muito utilizada para aprendizagem indutiva e é extremamente prática.
+
+O conhecimento da Árvore de Decisão será baseado em uma estrutura de árvore para assim podermos realizar decisão. Porém, caso não queira representar em estruturá de árvores, pode ser facilmente representada por regras "se/então". Pode-se utilizar tanto em problemas supervisionados quanto não supervisionados.
+
+A árvore decisão também consegue descobrir quais são os atributos de maior importância para predição formando uma estrutura de nós. 
+
+A base é a mesma da árvore de regressão.
+
+Classe de algoritmos de aprendizado baseado na árvore de decisão: ID3("top-down"), C4.5 etc.
+
+É importante ressaltar que uanto menor a árvore, melhor será a indução. Isso basicamente quer dizer que: caso fique grande, pode cair num problema de overfitting ("100% de acerto").
+
+Outra coisa que precisa-se lembrar em uma Árvore de Decisão é a entropia, a qual diz o quanto um conjunto de dados aleatório está "impuro".
+E sempre varia entre 0 e 1, de acordo com a proporção de +/- no conjunto. Vale lembrar que a entropia é importante para o cálculo de ganho de informação para a árvore.
+
+A entropia (binária) é dada pela seguinte fórmula:
+
+$$Entropia(S) = -\sum p_{+} log_{2}  p_{+} - p_{-} log_{2} p_{-}$$
+
+onde:
+
+S: coleção S contendo exemplos
+p(+): proporção de exemplos positivos em S;
+p(-): proporção de exemplos negativos em S
+
+Referencia:
+http://web.tecnico.ulisboa.pt/ana.freitas/bioinformatics.ath.cx/bioinformatics.ath.cx/indexf23d.html?id=199
+
+
+### Criando modelo Árvore de Decisão (Variável Principal: GrupoQualidade)
+
+```{r}
+
+DT_Modelo01 <-rpart(GrupoQualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, data = vt_treino)
+
+summary(DT_Modelo01)
+rpart.plot(DT_Modelo01, digits = 19, fallen.leaves = TRUE)
+
+```
+
+
+### Análise da Qualidade do Modelo
+
+```{r}
+DT_Preditor <- as.data.frame(predict(DT_Modelo01, newdata = vt_teste))
+DT_Preditor$factor <- as.factor(ifelse(DT_Preditor[["1"]] > DT_Preditor[["0"]],1,0))
+confusionMatrix(DT_Preditor$factor, vt_teste$GrupoQualidade)
+```
+
+Até agora notamos que este foi o modelo que mais acertou com `87%` de acurácia, justamente por que a técnica é capaz de prever com maior exatidao quais as variaveis mais importantes para determinar a qualidade.
+
+
+## Modelo 4:  Regressão Logística
+
+### Técnica
+
+A regressão logística é um modelo no qual classificamos na qual a variável dependente possuem valores binários (intervalos entre 0 e 1), ou seja, um ou o outro e as independentes podem ser categóricas ou não.
+
+Este tipo de modelo lida muito bem com variáveis de entrada (independentes) de tipo categórica e possui um grau relativamente alto de confiabilidade.
+
+Podemos dizer de modo geral que funciona como uma regressão linear, com exceção de que as variáveis dependentes devem ser categóricas e utiliza o método de máxima verossimilhança, ao invés dos mínimos quadrados como na regressão linear.
+
+Como vimos, nosso dataset possui apenas dados numéricos, com exceção do tipo de vinho.
+
+### Criando modelo Árvore de Regressão Logística com todas as variáveis (quality: variável principal)
+
+```{r}
+RL_Modelo01 <- glm(qualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, data = vt_treino)
+summary(RL_Modelo01)
+```
+
+### Análise da Qualidade do Modelo (Matriz de Confusão)
+
+```{r 24}
+RL_Preditor <- predict.glm(RL_Modelo01, newdata = vt_teste, type = 'response')
+RL_Preditor_Corte <- as.factor(ifelse(RL_Preditor > 6,1,0))
+confusionMatrix(RL_Preditor_Corte, vt_teste$GrupoQualidade)
+```
+
+Podemos verificar que na regressão logística a acurácia foi relativamente mais baixa (`79,6%` aproximadamente). Acreditamos que isso é porque a natureza de nosso problema envolve dados numéricos e a regressão logística se aplica melhor para casos em que se utilizam variáveis categóricas.
+
