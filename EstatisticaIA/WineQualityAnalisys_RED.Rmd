@@ -263,7 +263,7 @@ summary(RL_Modelo01)
 
 ### Análise da Qualidade do Modelo (Matriz de Confusão)
 
-```{r 24}
+```{r}
 RL_Preditor <- predict.glm(RL_Modelo01, newdata = vt_teste, type = 'response')
 RL_Preditor_Corte <- as.factor(ifelse(RL_Preditor > 6,1,0))
 confusionMatrix(RL_Preditor_Corte, vt_teste$GrupoQualidade)
