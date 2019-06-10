@@ -271,3 +271,53 @@ confusionMatrix(RL_Preditor_Corte, vt_teste$GrupoQualidade)
 
 Podemos verificar que na regressão logística a acurácia foi relativamente mais baixa (`79,6%` aproximadamente). Acreditamos que isso é porque a natureza de nosso problema envolve dados numéricos e a regressão logística se aplica melhor para casos em que se utilizam variáveis categóricas.
 
+
+Redução de dimensionalidade PCA e Clusters
+
+PCA
+
+Colocar algum texto que faça menção a regra de funcionamento
+
+
+
+```{r}
+
+#necessario atribuir apenas valores numericos para o PCA neste caso iremos fazer um subset dos dados
+
+TintoPCA = prcomp(vinho_tinto[1:12], scale. = TRUE)
+
+summary(TintoPCA)
+
+
+TintoPCA
+
+plot(1:12, TintoPCA$sdev^2, type = "b", xlab = "Componente",
+     ylab = "Variância", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+
+
+```
+
+
+De acordo com o Grafico 6 compoentes explicam a maior quantidade de dados
+
+```{r}
+biplot(TintoPCA)
+```
+
+
+
+
+
+```{r}
+
+cumpro <- cumsum(TintoPCA$sdev^2 / sum(TintoPCA$sdev^2))
+plot(cumpro[0:15], xlab = "PC #", ylab = "", main = "Variancia Cumulativa")
+abline(v = 6, col="blue", lty=5)
+abline(h = 0.88759, col="blue", lty=5)
+legend("topleft", legend=c("Cut-off @ PC6"),
+       col=c("blue"), lty=5, cex=0.6)
+
+```
+
+
+o Grafico acima demonstra que com 6 componentes conseguimos explicar quase 90% da variancia dos dados

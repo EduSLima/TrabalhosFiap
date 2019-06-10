@@ -22,12 +22,14 @@ Inicicalmente vamos instalar os pacotes, caso seja necessário, que serão usado
 options(warn =-1)
 
 #lista de pacotes que iremos utilizar no projeto
-Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally","gmodels","ggpubr","caTools","caret")
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", "plotly","skimr","gridExtra","GGally","gmodels","ggpubr","caTools","caret" ,"rpart.plot")
 
 #com base nos pacotes instalados crio uma variavel somente com os pacotes que não temos ainda para realizar a instalação 
 #dos pacotes que de fato não possuimos
 PacotesNovos <- Pacotes_Necessarios[!(Pacotes_Necessarios %in% installed.packages()[,"Package"])]
 if(length(PacotesNovos)){ install.packages(PacotesNovos)} else {print("Todos os Pacotes Estão Instalados")}
+
+
 
 ```
 
