@@ -1,0 +1,245 @@
+---
+title: "Wine Quality Analysis"
+author: "FIAP-06IA"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::readthedown:
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+---
+
+
+```{r knitr_init, echo=FALSE, results="asis", cache=FALSE}
+
+## Global options
+options(max.print = "75")
+opts_chunk$set(echo = FALSE,
+	             cache = FALSE,
+               prompt = FALSE,
+               tidy = FALSE,
+               comment = NA,
+               message = FALSE,
+               warning = FALSE)
+opts_knit$set(width = 75)
+```
+
+
+# Inicio 
+
+<img src="Arquivos/vinho.jpg" style="width:25%; border:10px solid; margin-right: 20px" align="left">
+
+Trabalho de conlusão de CONCEITOS ESTATÍSTICOS PARA IA 
+Professora: ADELAIDE ALVES DE OLIVEIRA
+
+
+
+
+
+Integrantes:
+
+* EDUARDO MORAIS
++ EDUARDO SIQUEIRA DE LIMA
++ GABRIEL SHIKAMA
++ RICARDO KALIMANIS
+
+Análise realizada no dataset WineQuality onde aplicaremos todas as técnicas aprendidas em sala de aula.
+
+
+# Preparando dos Dados
+
+## Instalando Pacotes
+
+Instalando os pacotes necessários para realizar as análises 
+```{r chunk="idx_01_01", echo=TRUE, eval=TRUE}
+
+#lista de pacotes que iremos utilizar no projeto
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr", "corrgram","corrplot", 
+                         "plotly","skimr","rmarkdown","GGally","gmodels","ggpubr","caTools",
+                         "caret" ,"rpart.plot","knitr","DT","rmdformats")
+
+#com base nos pacotes instalados crio uma variavel somente com os pacotes 
+#que não temos ainda para realizar a instalação 
+#dos pacotes que de fato não possuimos
+PacotesNovos <- Pacotes_Necessarios[!(Pacotes_Necessarios %in% installed.packages()[,"Package"])]
+if(length(PacotesNovos)){ install.packages(PacotesNovos)} else {print("Todos os Pacotes Estão Instalados")}
+
+
+```
+
+## Carregando os Pacotes
+```{r chunk="idx_01_02", echo=TRUE, eval=FALSE}
+lapply(Pacotes_Necessarios, require, character.only = TRUE)
+```
+
+
+## Importando os Datasets de Wines Quality.
+
+
+### Lista DE - PARA das colunas
+
+Nome no Arquivo     |  Nome Traduzido
+----------------    |-----------------
+ID                  |ID (que não sera utilizado)
+fixed acidity       |acidez_fixa
+volatile acidity    |acidez_volatil
+citric acid         |acido_citrico	
+residual sugar      |acucar_residual
+chlorides           |cloretos
+free sulfur dioxide |fsd
+total sulfur dioxide|tsd
+density             |densidade
+pH                  |PH
+sulphates           |sulfatos
+alcohol             |grau_alcolico
+quality             |qualidade
+Vinho               |Tipo
+
+
+```{r chunk="idx_01_03" , echo=TRUE, eval=TRUE}
+#Criando uma variável nome_colunas que receberá os nomes das colunas que normalizaremos a fim de facilitar o resto da análise
+nome_colunas <- c("id","acidez_fixa","acidez_volatil","acido_citrico","acucar_residual","cloretos", "fsd", "tsd","densidade","PH", 
+                  "sulfatos","grau_alcolico","qualidade","tipo")
+
+#uso da biblioteca readr é para obter uma performance de carga melhor que a lib padrão do R
+#e escolhemos o read_csv2 justamente pelo fato do arquivo estar separado por ; ao invés de ,
+#o separador decimal também não é o . que é convencional e este comando ja os converte facilmente
+#skip = 1 para ignorar o cabecalho que mudamos para melhor entendimento
+vinhos <- read_csv2("./Arquivos/BaseWine_Red_e_White.csv" ,col_names = nome_colunas, skip = 1)
+
+```
+
+
+# Análise Exploratoria
+
+## Observando o DataFrame
+
+Exibindo as Dimensões do dataframe vinhos
+```{r chunk="idx_02_01" , echo=TRUE, eval=TRUE}
+
+dim(vinhos)
+
+```
+
+
+Exibindo a Estrutura do dataframe vinhos
+```{r chunk="idx_02_02" , echo=TRUE, eval=TRUE}
+
+str(vinhos)
+
+```
+
+
+Exibindo a Sumario é um histograma inicial  do dataframe vinhos
+```{r chunk="idx_02_03" , echo=TRUE, eval=TRUE}
+
+skim(vinhos[, names(vinhos) != "id"] ) #retirando a coluna ID da análise
+```
+
+Observa-se que:
+
+* O campo `acucar_residual` e `fsd` possuem um desvio padrão acima das demais variaveis
+* A maioria dos histogramas apresenta uma distribuição normal entretanto não centralizado o que pode indicar a presença de outliers
+
+```{r chunk="idx_02_04" , echo=TRUE, eval=TRUE}
+sapply(vinhos, function(x)all(is.na(x)))
+```
+
+O resultado acima nos descreve que não há presença de nulos na base, isto é indicado pelo retorno `FALSE` em cada variável
+
+## Outliers
+
+
+Imprimindo Histogramas das variaveis
+```{r chunk="idx_02_05" , echo=TRUE, eval=TRUE}
+attach(vinhos)
+
+Rotulos_Colunas <-c("id", "acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+                    "PH","sulfatos","grau alcolico","qualidade","tipo")
+
+grafico_lista <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:13){
+  grafico_lista[[i-1]] <- plot_ly(x = as.formula(vinhos[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+subplot(grafico_lista,  nrows = 4)
+
+
+```
+
+
+Podemos observar que apesar do desenho ser similar à uma distribuição normal, isso se deu pois mais à esquerda exceto grau alcoolico, que se sabe
+que não há vinhos com teor alcoolico abaixo de 6.5% (levendo em consideração um vinho de sobremesa mais licoroso). portanto nosso proximo objeto de
+estudo será o grau alcoolico a procura de outliers e a remoção dos mesmos.
+
+```{r chunk="idx_02_06" , echo=TRUE, eval=TRUE}
+
+#criando função para exibir a dispersão dos dados 
+p <- function(..., sep = ''){
+  paste(..., collapse = sep)
+}
+
+fn_Exibir_Dispersao <- function (col, columnName){
+  print(p('O menor elemento de', columnName, ' é', min(col)))
+  print(p('O maior elemento de', columnName, ' é', max(col)))
+  print(p('Variação Populacional de', columnName, 'é', var(col), sep = ' '))
+  print(p('Desvio padrão de', columnName, 'é', sd(col), sep = ' '))
+  print(p('A média dos valores de ', columnName, 'é', mean(col), sep = ' '))
+  print(p('A diferença entre a média e a mediana é de', columnName, 'é', abs(mean(col) - sd(col)), sep = ' '))
+}
+
+fn_Exibir_Dispersao(vinhos$grau_alcolico, 'Teor Alcoolico')
+
+
+```
+
+É nítido que há erros relacionados ao teor alcoólico, ao executar a função de dispersão temos como retorno observações com teor inferior a 1% de alcool.
+
+
+```{r chunk="idx_02_07" , echo=TRUE, eval=TRUE}
+
+subset(vinhos, grau_alcolico <6)
+
+```
+
+Olhando a tabela percebmos que existem 4 observações para vinho tinto que nos parecem ser erros de digitação iremos criar a partir deste momento um novo
+data frame para trabalhar a limpeza dos dados preservando o original por questões de segurança e em seguida imprimiremos os graficos novamente para a variavel grau alcoolico
+
+
+```{r chunk="idx_02_08" , echo=TRUE, eval=TRUE}
+
+vinhos_ajustado <- subset(vinhos[-1], grau_alcolico > 6)
+
+grafico_lista <- vector("list", length = 2)
+
+grafico_lista[[1]] <-  plot_ly(x = vinhos_ajustado$grau_alcolico, type = 'histogram', name = 'Histograma')
+grafico_lista[[2]] <-  plot_ly(y = vinhos_ajustado$grau_alcolico, type = "box", name = 'Teor Alcoolico')
+
+subplot(grafico_lista,  nrows = 1)
+
+```
+
+
+Imprimindo novamente o histograma de todas as variáveis
+
+Imprimindo Histogramas das variaveis
+```{r chunk="idx_02_09" , echo=TRUE, eval=TRUE}
+attach(vinhos_ajustado)
+
+Rotulos_Colunas <-c( "acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+                    "PH","sulfatos","grau alcolico","qualidade","tipo")
+
+grafico_lista <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:12){
+  grafico_lista[[i-1]] <- plot_ly(x = as.formula(vinhos_ajustado[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+subplot(grafico_lista,  nrows = 4)
+
+
+```
+
+
+A distribuição dos dados ficou mais uniforme, mesmo com a distribuição estar postada mais a esquerda iremos proceguir com a análise parece ser um comportamento geral das variveis 
+já que todas obedecem este padrão.
+

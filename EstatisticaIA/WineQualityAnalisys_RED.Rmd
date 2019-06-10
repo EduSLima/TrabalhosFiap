@@ -295,10 +295,11 @@ plot(1:12, TintoPCA$sdev^2, type = "b", xlab = "Componente",
      ylab = "Variância", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
 
 
+
 ```
 
 
-De acordo com o Grafico 6 compoentes explicam a maior quantidade de dados
+De acordo com o Grafico 7 compoentes explicam a maior quantidade de dados
 
 ```{r}
 biplot(TintoPCA)
@@ -312,7 +313,7 @@ biplot(TintoPCA)
 
 cumpro <- cumsum(TintoPCA$sdev^2 / sum(TintoPCA$sdev^2))
 plot(cumpro[0:15], xlab = "PC #", ylab = "", main = "Variancia Cumulativa")
-abline(v = 6, col="blue", lty=5)
+abline(v = 7, col="blue", lty=5)
 abline(h = 0.88759, col="blue", lty=5)
 legend("topleft", legend=c("Cut-off @ PC6"),
        col=c("blue"), lty=5, cex=0.6)
@@ -320,4 +321,13 @@ legend("topleft", legend=c("Cut-off @ PC6"),
 ```
 
 
-o Grafico acima demonstra que com 6 componentes conseguimos explicar quase 90% da variancia dos dados
+o Grafico acima demonstra que com 7 componentes conseguimos explicar quase 90% da variancia dos dados
+
+
+
+```{r}
+
+mat_tinto <-cor(vinho_tinto[1:12])
+
+corrplot::corrplot(mat_tinto, method="circle", order="hclust")
+```
