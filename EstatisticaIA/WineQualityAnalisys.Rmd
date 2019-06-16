@@ -240,22 +240,15 @@ Exibindo a Correlação do dataset observando apenas os dados referentes ao vinh
 
 ```{r}
 
-  pt
+                                                 
+  ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco"))
+                                        
+          
+
 
 ```
-
-
-Exibindo a Correlação do dataset observando apenas os dados referentes ao vinho branco
-
-```{r}
-
-  pb
-
-```
-
 
 Após analisar as matrizes de correlações confirmamos nossa teoria de que há muitas diferenças na determinante de qualidade entre vinho tinto e vinho branco
-
 
 
 Nota-se através do grafico de corelação que a priori temos uma correlação de Teor alcoolico, densidade, cloretos, acido e acidez volatil mais relativas com Qualidade
