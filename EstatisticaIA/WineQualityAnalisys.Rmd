@@ -104,7 +104,7 @@ head (vinhos,3)
 
 Observa-se que:
 
-* O campo `acucar_residual` e `fsd` possuem um desvio padrão acima das demais variaveis
+* O campo `acucar_residual` e `fsd`  e `tsd` possuem um desvio padrão acima das demais variaveis
 * A maioria dos histogramas apresenta uma distribuição normal entretanto não centralizado o que pode indicar a presença de outliers
 
 
