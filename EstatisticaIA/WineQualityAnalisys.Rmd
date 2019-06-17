@@ -258,41 +258,25 @@ iremos traçar graficos para comprovar nossa tese
 ```{r}
 
 #AUTOMATIZAR ESSA PARTE PARA LER TODAS AS VARIAVEIS 
+attach(vinhos_ajustado)
 
-  pf <- qplot( qualidade, grau_alcolico,data=vinhos_ajustado)+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
-  pt <- qplot( qualidade, grau_alcolico,data=subset(vinhos_ajustado, tipo=="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
-  pb <- qplot( qualidade, grau_alcolico,data=subset(vinhos_ajustado, tipo!="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
 
-  
-  ggarrange(pf,                                                 
-          ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco")), 
-          nrow = 2, 
-          labels = "Todos os Tipos de Vinho"                                       
-          ) 
-  
-  
-  pf <- qplot( qualidade, acidez_fixa,data=vinhos_ajustado)+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
-  pt <- qplot( qualidade, acidez_fixa,data=subset(vinhos_ajustado, tipo=="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
-  pb <- qplot( qualidade, acidez_fixa,data=subset(vinhos_ajustado, tipo!="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+ pt <- ggplotly(
+          qplot( qualidade, acidez_fixa,data=vinhos_ajustado, colour = grau_alcolico ) + 
+            geom_smooth(method = "glm", formula = y~x, se=FALSE, fullrange=TRUE)  +
+            theme(legend.position="none")+ 
+            labs(title="Todo os Tipos de Vinho")     ) 
+pf <- ggplotly(
+      qplot( qualidade, acidez_fixa,data=vinhos_ajustado, color=tipo, shape=tipo) + 
+      theme(legend.position = "bottom") +
+    geom_smooth(method = "glm", formula = y~x, se=FALSE, fullrange=TRUE)  ) %>%
+    layout(legend = list( orientation = "h", bordercolor = "black" , y = -0.1, 
+                          borderwidth = 0.5,traceorder  = "reversed"))
 
-  
-  ggarrange(pf,                                                 
-          ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco")), 
-          nrow = 2, 
-          labels = "Todos os Tipos de Vinho"                                       
-          ) 
 
-  
-  pf <- qplot( qualidade, acucar_residual,data=vinhos_ajustado)+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
-  pt <- qplot( qualidade, acucar_residual,data=subset(vinhos_ajustado, tipo=="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
-  pb <- qplot( qualidade, acucar_residual,data=subset(vinhos_ajustado, tipo!="RED"))+ geom_smooth(method = "glm", formula = y~x, family = gaussian(link = 'log'))
+pf
 
-  
-  ggarrange(pf,                                                 
-          ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco")), 
-          nrow = 2, 
-          labels = "Todos os Tipos de Vinho"                                       
-          ) 
+subplot(pt,pf, nrows = 2, shareX = T, shareY = T)
 
 
 ```
