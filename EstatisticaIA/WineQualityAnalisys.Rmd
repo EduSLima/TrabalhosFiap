@@ -18,6 +18,8 @@ title: "ANALISE DO DATASET WINE QUALITY"
 Inicicalmente vamos instalar os pacotes, caso seja necessário, que serão usados no decorrer da análise
 ```{r}
 
+setwd("/media/DATA/Repositorios/trabalhos/TrabalhosFiap/EstatisticaIA")
+
 #ignorando alertas para não poluir a exibição do markdwon
 options(warn =-1)
 
@@ -239,13 +241,8 @@ Exibindo a Correlação de Todo dataset
 Exibindo a Correlação do dataset observando apenas os dados referentes ao vinho tinto
 
 ```{r}
-
-                                                 
   ggarrange(pt, pb, ncol = 2, labels = c("Tinto", "Branco"))
                                         
-          
-
-
 ```
 
 Após analisar as matrizes de correlações confirmamos nossa teoria de que há muitas diferenças na determinante de qualidade entre vinho tinto e vinho branco
@@ -258,7 +255,22 @@ iremos traçar graficos para comprovar nossa tese
 ```{r}
 
 #AUTOMATIZAR ESSA PARTE PARA LER TODAS AS VARIAVEIS 
+
+#principio da automacao 
+# df_aux <- data.frame(Qualidade = vinhos_ajustado$qualidade, Tipo = vinhos_ajustado$tipo, Atributo = vinhos_ajustado[[11]])
+# Nome_Atributo <-colnames(vinhos[12])
+# 
+# 
+# pt <- ggplotly(
+#           qplot( Qualidade, Atributo,data=df_aux, colour = Atributo ) + 
+#             geom_smooth(method = "glm", formula = y~x, se=FALSE, fullrange=TRUE)  +
+#             theme(legend.position="none")+ 
+#             labs(title="Todo os Tipos de Vinho")) %>%
+#       layout(yaxis = list(title = Nome_Atributo))
+
+
 attach(vinhos_ajustado)
+
 
 
  pt <- ggplotly(
