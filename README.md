@@ -1,6 +1,6 @@
 #Trabalhos de Conclusão MBA Fiap turma 06IA
 
-para iniciar o git na maquina 
+# Para iniciar o git na maquina 
 
 git init
 
@@ -17,7 +17,7 @@ git commit -m "Msg de alteracao do que fez"
 git push origin master 
 
 
-se quiser saber o que houve de alteracao pode usar o comando 
+# Se quiser saber o que houve de alteracao pode usar o comando 
 
 git status
 
