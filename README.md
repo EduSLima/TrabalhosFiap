@@ -3,8 +3,8 @@
 para iniciar o git na maquina 
 git init
 
-git --global user.name "Seu Nome"
-git --global user.email "Seu Email"
+git config --global user.name "Seu Nome"
+git config --global user.email "Seu Email"
 
 git clone https://github.com/EduSLima/TrabalhosFiap.git
 
