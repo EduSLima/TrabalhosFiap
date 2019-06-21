@@ -165,10 +165,10 @@ O resultado acima nos descreve que não há presença de nulos na base, isto é indi
 ```{r chunk="idx_02_05" , echo=TRUE, eval=TRUE}
 
 #removendo a coluna Id que não é necessária para nossa analise
-#vinhos<- vinhos[-1]
+vinhos<- vinhos[-1]
 
 
-vinhos[duplicated(vinhos[-1], fromLast = TRUE), ]
+vinhos[duplicated(vinhos, fromLast = TRUE), ]
 
 ```
 
@@ -180,7 +180,7 @@ count(vinhos[duplicated(vinhos, fromLast = TRUE), ], tipo)
 Removendo as linhas duplicadas
 ```{r chunk="idx_02_07" , echo=TRUE, eval=TRUE}
 
-vinhos<-vinhos[!duplicated(vinhos[-1], fromLast = TRUE), ]
+vinhos<-vinhos[!duplicated(vinhos, fromLast = TRUE), ]
 
 ```
 
@@ -204,7 +204,62 @@ subplot(grafico_lista,  nrows = 4)
 ```
 
 
-Podemos observar que quase em todas variáveis possuem um desenho ser similar à uma distribuição normal no entanto isso se deu pois mais à esquerda exceto grau alcoolico. Isso pode indicar presença de Outliers. A Conslusão que já se pode tirar é que há erros no Teor alcoolico, haja visto que é sabido que não existe vinhos com teor alcoolico a baixo de 8. 
+Podemos observar que quase em todas variáveis possuem um desenho ser similar à uma distribuição normal no entanto isso se deu pois mais à esquerda exceto grau alcoolico.
+Isso pode indicar presença de Outliers. A Conslusão que já se pode tirar é que há erros no Teor alcoolico, haja visto que é sabido que não existe vinhos com teor alcoolico a baixo de 8. 
+As outras distribuições podem contér também Outliers que serão analisados com inferências estatísticas.
+
+Vamos inicialmente analisar a variável de Teor Alcoolico
+
+
+```{r chunk="idx_02_09" , echo=TRUE, eval=TRUE}
+
+#criando função para exibir a dispersão dos dados 
+p <- function(..., sep = ''){
+  paste(..., collapse = sep)
+}
+
+fn_Exibir_Dispersao <- function (col, columnName){
+  print(p('O menor elemento de', columnName, ' é', min(col)))
+  print(p('O maior elemento de', columnName, ' é', max(col)))
+  print(p('Variação Populacional de', columnName, 'é', var(col), sep = ' '))
+  print(p('Desvio padrão de', columnName, 'é', sd(col), sep = ' '))
+  print(p('A média dos valores de ', columnName, 'é', mean(col), sep = ' '))
+  print(p('A diferença entre a média e a mediana é de', columnName, 'é', abs(mean(col) - sd(col)), sep = ' '))
+}
+
+fn_Exibir_Dispersao(vinhos$grau_alcolico, 'Teor Alcoolico')
+
+
+```
+
+É nítido que há erros relacionados ao teor alcoólico, ao executar a função de dispersão temos como retorno observações com teor inferior a 1% de alcool. 
+Vamos listar quem são no próximo passo
+
+
+```{r chunk="idx_02_10" , echo=TRUE, eval=TRUE}
+
+subset(vinhos, grau_alcolico <6)
+
+```
+
+Olhando a tabela percebmos que existem 4 observações para vinho tinto que nos parecem ser erros de digitação iremos criar a partir deste momento um novo
+data frame para trabalhar a limpeza dos dados preservando o original por questões de segurança e em seguida imprimiremos os graficos novamente para a variavel grau alcoolico
+
+A partir deste momento decidimos criar um novo dataframe este já sem as observações a cima descritas
+```{r chunk="idx_02_11" , echo=TRUE, eval=TRUE}
+
+vinhos_ajustado <- subset(vinhos, grau_alcolico > 6)
+
+grafico_lista <- vector("list", length = 2)
+
+grafico_lista[[1]] <-  plot_ly(x = vinhos_ajustado$grau_alcolico, type = 'histogram', name = 'Histograma')
+grafico_lista[[2]] <-  plot_ly(y = vinhos_ajustado$grau_alcolico, type = "box", name = 'Teor Alcoolico')
+
+subplot(grafico_lista,  nrows = 1)
+
+```
+
+Agora a variável apresenta um comportamento melhor distribuido como é possivel notar nas inferências gráficas anteriores.
 
 
 ## Explorando o DataSet
@@ -214,7 +269,7 @@ Podemos observar que quase em todas variáveis possuem um desenho ser similar à u
 
 ```{r chunk="idx_02_12" , echo=TRUE, eval=TRUE}
   
-aggregate(vinhos[,-12],  by = list(vinhos$tipo),  FUN = sd)
+aggregate(vinhos_ajustado[,-12],  by = list(vinhos_ajustado$tipo),  FUN = sd)
 
 ```
 
@@ -242,11 +297,11 @@ dados separando o dataset em 2 :
 
 ```{r chunk="idx_03_01" , echo=TRUE, eval=TRUE}
   
-  df_base_tinto  <-as.data.frame(subset(vinhos[,1:13], tipo=="RED"))
-  df_base_branco <-as.data.frame(subset(vinhos[,1:13], tipo!="RED"))
+  df_base_tinto  <-as.data.frame(subset(vinhos_ajustado[,1:12], tipo=="RED"))
+  df_base_branco <-as.data.frame(subset(vinhos_ajustado[,1:12], tipo!="RED"))
   
   #removendo os dataframes desnecessarios
-  rm("vinhos")
+  rm("vinhos_ajustado", "vinhos")
 
 ```
 
@@ -281,7 +336,7 @@ Transformado
 ```{r chunk="idx_03_02" , echo=TRUE, eval=TRUE}
 
 #preparação para a transformação dos dados
-df_prep_tinto <- preProcess(df_base_tinto[,1:13], c("BoxCox", "center", "scale"))
+df_prep_tinto <- preProcess(df_base_tinto[,1:12], c("BoxCox", "center", "scale"))
 df_tinto <- data.frame(trans = predict(df_prep_tinto, df_base_tinto))
 
 #remove df desnecessario
@@ -305,7 +360,7 @@ Transformado
 ```{r chunk="idx_03_03" , echo=TRUE, eval=TRUE}
 
 #preparação para a transformação dos dados
-df_prep_branco <- preProcess(df_base_branco[,1:13], c("BoxCox", "center", "scale"))
+df_prep_branco <- preProcess(df_base_branco[,1:12], c("BoxCox", "center", "scale"))
 df_branco <- data.frame(trans = predict(df_prep_branco, df_base_branco))
 
 #atribui os nomes originais 
@@ -351,13 +406,12 @@ outlier$tsd <-count(df_tinto[abs(df_tinto$tsd)>3,])
 outlier$densidade <-count(df_tinto[abs(df_tinto$densidade)>3,])
 outlier$PH <-count(df_tinto[abs(df_tinto$PH)>3,])
 outlier$sulfatos <-count(df_tinto[abs(df_tinto$sulfatos)>3,])
-outlier$grau_alcolico <-count(df_tinto[abs(df_tinto$grau_alcolico)>3,])
 
 summary(outlier)
 
 ```
 
-Encontramos 67 observações e iremos remover de nossa análise
+Encontramos 38 observações e iremos remover de nossa análise
 
 #### Removendo os outliers
 
@@ -365,15 +419,11 @@ Encontramos 67 observações e iremos remover de nossa análise
 ```{r chunk="idx_03_04" , echo=TRUE, eval=TRUE}
 
 df_tinto <- df_tinto[!abs(df_tinto$acidez_fixa)>3,]
-df_tinto <- df_tinto[!abs(df_tinto$acidez_volatil)>3,]
 df_tinto <- df_tinto[!abs(df_tinto$acido_citrico)>3,]
-df_tinto <- df_tinto[!abs(df_tinto$acucar_residual)>3,]
 df_tinto <- df_tinto[!abs(df_tinto$cloretos)>3,]
 df_tinto <- df_tinto[!abs(df_tinto$fsd)>3,]
-df_tinto <- df_tinto[!abs(df_tinto$densidade)>3,]
 df_tinto <- df_tinto[!abs(df_tinto$PH)>3,]
 df_tinto <- df_tinto[!abs(df_tinto$sulfatos)>3,]
-df_tinto <- df_tinto[!abs(df_tinto$grau_alcolico)>3,]
 
 ```
 
@@ -389,12 +439,12 @@ df_tinto <- df_tinto[!abs(df_tinto$grau_alcolico)>3,]
 ```{r chunk="idx_03_05" , echo=TRUE, eval=TRUE}
 attach(df_base_tinto)
 
-Rotulos_Colunas <-c( "acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
-                    "PH","sulfatos","grau alcolico","qualidade")
+Rotulos_Colunas <-c("id", "acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+                    "PH","sulfatos","grau alcolico","qualidade","tipo")
 
 p_1 <- vector("list", length = length(Rotulos_Colunas)-2)
 
-for(i in 2:12){
+for(i in 2:11){
   p_1[[i-1]] <- plot_ly(x = as.formula(df_base_tinto[i]),   type = 'histogram', name = Rotulos_Colunas[i])
 }  
 
@@ -438,7 +488,6 @@ outlier$tsd <-count(df_branco[abs(df_branco$tsd)>3,])
 outlier$densidade <-count(df_branco[abs(df_branco$densidade)>3,])
 outlier$PH <-count(df_branco[abs(df_branco$PH)>3,])
 outlier$sulfatos <-count(df_branco[abs(df_branco$sulfatos)>3,])
-outlier$grau_alcolico <-count(df_branco[abs(df_branco$grau_alcolico)>3,])
 
 summary(outlier)
 
@@ -454,6 +503,7 @@ Encontramos 153 observações fora do padrão e iremos remover de nossa análise
 df_branco <- df_branco[!abs(df_branco$acidez_fixa)>3,]
 df_branco <- df_branco[!abs(df_branco$acidez_volatil)>3,]
 df_branco <- df_branco[!abs(df_branco$acido_citrico)>3,]
+df_branco <- df_branco[!abs(df_branco$acucar_residual)>3,]
 df_branco <- df_branco[!abs(df_branco$cloretos)>3,]
 df_branco <- df_branco[!abs(df_branco$fsd)>3,]
 df_branco <- df_branco[!abs(df_branco$tsd)>3,]
@@ -508,115 +558,29 @@ subplot(p_2,  nrows = 4)
   O primeiro passo para iniciar o processo de aplicação de modelos estatísticos é validar as correlações que possam indicar caracteristicas que determinam o fato.E neste caso precisamos saber quais das variáveis podem agregar qualidade ao vinho.
   
 
-## Vinho Tinto 
-
+## Vinho Tinto  
 ```{r chunk="idx_03_07" , echo=TRUE, eval=TRUE}
 
-corrplot(cor(df_tinto), type = "lower")
+ggcorr(df_tinto, method = c("all.obs", "spearman"))
 ```  
- 
-```{r chunk="idx_03_08" , echo=TRUE, eval=TRUE}
-
-corrgram(df_tinto, type="data", lower.panel=panel.conf, 
-         upper.panel=panel.shade, main= "Correlações para Vinho Tinto", order=T, cex.labels=1.1)
-```   
+  
 
 
 ## Vinho Branco  
-
 ```{r chunk="idx_03_07" , echo=TRUE, eval=TRUE}
 
-corrplot(cor(df_branco), type = "lower")
-```  
- 
-```{r chunk="idx_03_08" , echo=TRUE, eval=TRUE}
+cor(df_branco)
+cor(subset(vinhos_ajustado[,2:11], tipo!="RED"))
 
-corrgram(df_branco, type="data", lower.panel=panel.conf, 
-         upper.panel=panel.shade, main= "Correlações para Vinho Branco", order=T, cex.labels=1.1)
-```   
+ggcorr(df_branco, method = c("all.obs", "spearman"))
+
+```  
+
+
 
 # Regressão Linear
 
-### Teoria
-  Regressão linear é uma equação para se estimar a condicional (valor esperado) de uma variável y, dados os valores de algumas outras variáveis x.
-
-  Exemplo de regressão linear.
-    A regressão, em geral, tem como objectivo tratar de um valor que não se consegue estimar inicialmente.
-
-  A regressão linear é chamada "linear" porque se considera que a relação da resposta às variáveis é uma função linear de alguns parâmetros. Os modelos de regressão que não são uma função linear dos parâmetros se chamam modelos de regressão não-linear. Sendo uma das primeiras formas de análise regressiva a ser estudada rigorosamente, e usada extensamente em aplicações práticas. Isso acontece porque modelos que dependem de forma linear dos seus parâmetros desconhecidos, são mais fáceis de ajustar que os modelos não-lineares aos seus parâmetros, e porque as propriedades estatísticas dos estimadores resultantes são fáceis de determinar.[1]
-
-### Formula 
-
-  $$y_{i} = \alpha + \beta X_{i} + \varepsilon_{i}$$
-
-onde:
-  
-$$y_{i}$$: Variável explicada (dependente); representa o que o modelo tentará prever
-$$\alpha$$: É uma constante, que representa a interceptação da reta com o eixo vertical;
-$$\beta$$: Representa a inclinação (coeficiente angular) em relação à variável explicativa;
-$$X_{i}$$: Variável explicativa (independente);
-$$\varepsilon _{i}}$$: Representa todos os factores residuais mais os possíveis erros de medição. O seu comportamento é aleatório, devido à natureza dos factores que encerra. Para que essa fórmula possa ser aplicada, os erros devem satisfazer determinadas hipóteses, que são: terem distribuição normal, com a mesma variância independentes e independentes da variável explicativa X, ou seja, i.i.d. (independentes e identicamente distribuídas).
-
-fonte: https://pt.wikipedia.org/wiki/Regress%C3%A3o_linear
-
-
 ## Vinho Tinto
-
-### Separação dos Dados Treino e Teste
-
-```{r chunk="idx_04_01" , echo=TRUE, eval=TRUE}
-set.seed(1914) #seed relacionado ao ano de fundação do nosso amado e glorioso Palestra Itália
-
-
-
-split <- sample.split(df_tinto$qualidade, SplitRatio = 0.8)
-
-#dividindo o dataset para treino e teste
-vt_treino <- subset(df_tinto, split == TRUE)
-vt_teste  <- subset(df_tinto, split == FALSE)
-
-```
-
-
-Criando o primeiro Modelo de Regressão utilizando todas as variáveis
-
-```{r chunk="idx_04_01" , echo=TRUE, eval=TRUE}
-
-Modelo_01 <- lm(as.numeric(qualidade) ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, 
-                data = vt_treino)
-
-summary(Modelo_01)
-
-
-Qfit1 <- lm(qualidade ~ ., data=vt_treino)
-vif(Qfit1)
-
-# make predictions
-predictions <- predict(Modelo_01, vt_teste$qualidade)
-# summarize accuracy
-mse <- mean((df_tinto$qualidade - predictions)^2)
-print(mse)
-
-
-
-```
-
-### Análise da Qualidade do Modelo (Matriz de Confusão)
-
-Vamos ver como o modelo se comporta utiliza todas as variáveis.
-
-```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
-  
-  prediction_lm <- predict.lm(Modelo_01, newdata = vt_teste, type = 'response')
-
-  distPred <- predict(Modelo_01, vt_teste)
-  distPred <- ceiling(distPred)
-  head(distPred)
-  
-  
-  
-```
-
 
 ## Vinho Branco
 
