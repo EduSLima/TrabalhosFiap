@@ -1,0 +1,479 @@
+---
+title: "Análise Qualidade do Vinho"
+author: "FIAP-06IA"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::readthedown:
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+---
+
+
+```{r knitr_init, echo=FALSE, results="asis", cache=FALSE}
+library(rmarkdown)
+library(knitr)
+library(rmdformats)
+library(DT)
+
+## Global options
+options(max.print = "75")
+opts_chunk$set(echo = FALSE,
+	             cache = FALSE,
+               prompt = FALSE,
+               tidy = FALSE,
+               comment = NA,
+               message = FALSE,
+               warning = FALSE)
+opts_knit$set(width = 75)
+```
+
+# Inicio
+
+## Introdução
+
+<img src="Arquivos/vinho.jpg" style="width:25%; border:10px solid; margin-right: 20px" align="left">
+
+>Trabalho de conlusão </br>
+>Matéria   : CONCEITOS ESTATÍSTICOS PARA IA </br>
+>Professora: ADELAIDE ALVES DE OLIVEIRA </br>
+
+</br>
+
+Integrantes:
+
+* EDUARDO MORAIS
++ EDUARDO SIQUEIRA DE LIMA
++ GABRIEL SHIKAMA
++ RICARDO KALIMANIS
+
+Análise realizada no dataset WineQuality onde aplicaremos todas as técnicas aprendidas em sala de aula.
+
+
+## Preparando o Ambiente
+
+### Instalando os pacotes necessários
+
+
+Instalando os pacotes necessários para realizar as análises 
+```{r chunk="idx_01_01", echo=TRUE, eval=TRUE}
+
+#lista de pacotes que iremos utilizar no projeto
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr","corrplot","plotly","skimr","GGally","gmodels","ggpubr","caTools",
+                         "caret" ,"rpart.plot","DT","e1071")
+
+#com base nos pacotes instalados crio uma variavel somente com os pacotes 
+#que não temos ainda para realizar a instalação 
+#dos pacotes que de fato não possuimos
+PacotesNovos <- Pacotes_Necessarios[!(Pacotes_Necessarios %in% installed.packages()[,"Package"])]
+if(length(PacotesNovos)){ install.packages(PacotesNovos)} else {print("Todos os Pacotes Estão Instalados")}
+
+
+```
+
+### Carregando os Pacotes
+
+```{r chunk="idx_01_02", echo=TRUE, eval=FALSE}
+lapply(Pacotes_Necessarios, require, character.only = TRUE)
+```
+
+## Dataset
+
+### Carregando o DataSet
+
+A fim de facilitar a compreensão e desenvolvimento de nosso codigo decidimos mudar os nomes das colunas do data set, a tabela a baixo indica o nome original do arquivo e o nome que propuzemos
+
+### Lista DE - PARA das colunas
+
+Nome no Arquivo     |  Nome Traduzido
+----------------    |-----------------
+ID                  |ID (que não sera utilizado)
+fixed acidity       |acidez_fixa
+volatile acidity    |acidez_volatil
+citric acid         |acido_citrico	
+residual sugar      |acucar_residual
+chlorides           |cloretos
+free sulfur dioxide |fsd
+total sulfur dioxide|tsd
+density             |densidade
+pH                  |PH
+sulphates           |sulfatos
+alcohol             |grau_alcolico
+quality             |qualidade
+Vinho               |Tipo
+
+```{r chunk="idx_01_03" , echo=TRUE, eval=TRUE}
+#Criando uma variável nome_colunas que receberá os nomes das colunas que normalizaremos a fim de facilitar o resto da análise
+nome_colunas <- c("id","acidez_fixa","acidez_volatil","acido_citrico","acucar_residual","cloretos", "fsd", "tsd","densidade","PH", 
+                  "sulfatos","grau_alcolico","qualidade","tipo")
+
+#uso da biblioteca readr é para obter uma performance de carga melhor que a lib padrão do R
+#e escolhemos o read_csv2 justamente pelo fato do arquivo estar separado por ; ao invés de ,
+#o separador decimal também não é o . que é convencional e este comando ja os converte facilmente
+#skip = 1 para ignorar o cabecalho que mudamos para melhor entendimento
+vinhos <- read_csv2("./Arquivos/BaseWine_Red_e_White.csv" ,col_names = nome_colunas, skip = 1)
+
+```
+
+# Análise Exploratória
+
+## Observando o DataFrame
+
+Exibindo as Dimensões do dataframe vinhos
+```{r chunk="idx_02_01" , echo=TRUE, eval=TRUE}
+
+dim(vinhos)
+
+```
+
+
+Exibindo a Estrutura do dataframe vinhos
+```{r chunk="idx_02_02" , echo=TRUE, eval=TRUE}
+
+str(vinhos)
+
+```
+
+## Validações Iniciais
+
+Exibindo a Sumario e um histograma inicial  do dataframe vinhos
+
+```{r chunk="idx_02_03" , echo=TRUE, eval=TRUE}
+options(width = 900)   #definindo o tamanho da area de impressão de saida do markdown
+options(max.print=500) # aumentando a saida da lista, sem esta opção alguns resultados tendem a ser cortados
+skim(vinhos[, names(vinhos) != "id"] ) #retirando a coluna ID da análise
+
+```
+
+Observa-se que:
+
+* O campo `acucar_residual`,`fsd`, `tsd` possuem um desvio padrão acima das demais variaveis
+* A maioria dos histogramas apresenta uma distribuição normal entretanto não centralizado o que pode indicar a presença de outliers
+
+
+### Checar presença de `nulos`
+```{r chunk="idx_02_04" , echo=TRUE, eval=TRUE}
+sapply(vinhos, function(x)all(is.na(x)))
+```
+
+O resultado acima nos descreve que não há presença de nulos na base, isto é indicado pelo retorno `FALSE` em cada variável
+
+### Checar presença de Registros Duplicados
+ 
+  Para prover melhor performance e acurácia de nossos modelos iremos verificar a existência de registros duplicados e removê-los se existir, mais antes é necessário remover uma coluna, ou simplesmente ignorar, que é a coluna ID que contem algum tipo de código incremental.
+
+```{r chunk="idx_02_05" , echo=TRUE, eval=TRUE}
+
+#removendo a coluna Id que não é necessária para nossa analise
+vinhos<- vinhos[-1]
+
+
+vinhos[duplicated(vinhos, fromLast = TRUE), ]
+
+```
+
+De fato existem 1176 registros duplicados onde:
+```{r chunk="idx_02_06" , echo=TRUE, eval=TRUE}
+count(vinhos[duplicated(vinhos, fromLast = TRUE), ], tipo)
+```
+
+Removendo as linhas duplicadas
+```{r chunk="idx_02_07" , echo=TRUE, eval=TRUE}
+
+vinhos<-vinhos[!duplicated(vinhos, fromLast = TRUE), ]
+
+```
+
+### Histograma
+
+Imprimindo Histogramas das variaveis
+```{r chunk="idx_02_08" , echo=TRUE, eval=TRUE}
+attach(vinhos)
+
+Rotulos_Colunas <-c("id", "acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+                    "PH","sulfatos","grau alcolico","qualidade","tipo")
+
+grafico_lista <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:13){
+  grafico_lista[[i-1]] <- plot_ly(x = as.formula(vinhos[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+subplot(grafico_lista,  nrows = 4)
+
+
+```
+
+
+Podemos observar que quase em todas variáveis possuem um desenho ser similar à uma distribuição normal no entanto isso se deu pois mais à esquerda exceto grau alcoolico.
+Isso pode indicar presença de Outliers. A Conslusão que já se pode tirar é que há erros no Teor alcoolico, haja visto que é sabido que não existe vinhos com teor alcooĺico a baixo de 8. 
+As outras distribuições podem contér também Outliers que serão analisados com inferências estatísticas.
+
+Vamos inicialmente analisar a variável de Teor Alcoolico
+
+
+```{r chunk="idx_02_09" , echo=TRUE, eval=TRUE}
+
+#criando função para exibir a dispersão dos dados 
+p <- function(..., sep = ''){
+  paste(..., collapse = sep)
+}
+
+fn_Exibir_Dispersao <- function (col, columnName){
+  print(p('O menor elemento de', columnName, ' é', min(col)))
+  print(p('O maior elemento de', columnName, ' é', max(col)))
+  print(p('Variação Populacional de', columnName, 'é', var(col), sep = ' '))
+  print(p('Desvio padrão de', columnName, 'é', sd(col), sep = ' '))
+  print(p('A média dos valores de ', columnName, 'é', mean(col), sep = ' '))
+  print(p('A diferença entre a média e a mediana é de', columnName, 'é', abs(mean(col) - sd(col)), sep = ' '))
+}
+
+fn_Exibir_Dispersao(vinhos$grau_alcolico, 'Teor Alcoolico')
+
+
+```
+
+É nítido que há erros relacionados ao teor alcoólico, ao executar a função de dispersão temos como retorno observações com teor inferior a 1% de alcool. 
+Vamos listar quem são no próximo passo
+
+
+```{r chunk="idx_02_10" , echo=TRUE, eval=TRUE}
+
+subset(vinhos, grau_alcolico <6)
+
+```
+
+Olhando a tabela percebmos que existem 4 observações para vinho tinto que nos parecem ser erros de digitação iremos criar a partir deste momento um novo
+data frame para trabalhar a limpeza dos dados preservando o original por questões de segurança e em seguida imprimiremos os graficos novamente para a variavel grau alcoolico
+
+A partir deste momento decidimos criar um novo dataframe este já sem as observações a cima descritas
+```{r chunk="idx_02_11" , echo=TRUE, eval=TRUE}
+
+vinhos_ajustado <- subset(vinhos, grau_alcolico > 6)
+
+grafico_lista <- vector("list", length = 2)
+
+grafico_lista[[1]] <-  plot_ly(x = vinhos_ajustado$grau_alcolico, type = 'histogram', name = 'Histograma')
+grafico_lista[[2]] <-  plot_ly(y = vinhos_ajustado$grau_alcolico, type = "box", name = 'Teor Alcoolico')
+
+subplot(grafico_lista,  nrows = 1)
+
+```
+
+Agora a variável apresenta um comportamento melhor distribuido como é possivel notar nas inferências gráficas anteriores.
+
+
+## Explorando o DataSet
+
+  Nosso intuito nesta parte é entender se podemos considerar o dataset como um todo ou se devemos observá-los por tipo de vinho para isso iremos agregar os dados por tipo de vinho 
+  e ver como as variáveis se comportam
+
+```{r chunk="idx_02_12" , echo=TRUE, eval=TRUE}
+  
+aggregate(vinhos_ajustado[,-12],  by = list(vinhos_ajustado$tipo),  FUN = sd)
+
+```
+
+Nos parece que há algumas diferenças significativas levando em consideração, os desvios padrão agregado por tipo de vinho onde:
+
+  | Observações
+--|-------------------------------------
+1 | Acidez fixa é quase o dobro em vinhos `Tintos`
+2 | Acidez Volatil é maior 0.7 desvios em `Tintos`
+3 | Ácido Cítrico é quase 4 desvios maior em `Brancos`
+4 | Cloretos maior que 2 desvios em `Tintos`
+5 | Sulfatos (fsd e tsd) é Maior em `Brancos`
+6 | Densidade é maior em  `Brancos`
+
+Entretanto a Qualidade não varia, ou seja em nossa perceção as características que determinam qualidade para os vinhos são diferentes e iremos ver a seguir a correlação dessas variáveis.
+
+
+# Preparação dos Dados
+
+## Inicio
+
+  Como Identificamos que pode fazer sentido analisar o vinho de maneira separada por tipo já que muitas variáveis tendem a se comportar de forma diferente vamos iniciar a preparação dos
+dados separando o dataset em 2 :
+`df_base_tinto` e `df_base_branco`
+
+```{r chunk="idx_03_01" , echo=TRUE, eval=TRUE}
+  
+  df_base_tinto  <-as.data.frame(subset(vinhos_ajustado[,1:12], tipo=="RED"))
+  df_base_branco <-as.data.frame(subset(vinhos_ajustado[,1:12], tipo!="RED"))
+
+```
+
+
+## Transformação Box Cox 
+
+  Em estatística, uma transformação de potência é uma família de funções que são aplicadas para criar a transformação monotônica de dados usando funções de potência. Esta é uma técnica de transformação de dados útil usada para estabilizar a variância, tornar os dados mais semelhantes à distribuição normal, melhorar a validade das medidas de associação (como a correlação de Pearson entre as variáveis) e para outros procedimentos de estabilização de dados.
+
+  Tanto a forma linear quanto a logarítmica são dois casos particulares de uma família mais extensa de transformações não-lineares. A transformação de potência é definida como uma função de variação contínua, em relação ao parâmetro de potência λ (lambda), ou seja, xλ. Uma classe geral de transformação que pode ser utilizada é a de Box-Cox, definida por:
+
+para λ diferente de 0
+$$f_\lambda(x) = \frac{(x)^\lambda - 1}{\lambda} $$ 
+
+para λ = 0
+$$f_0 = log(x)$$ 
+
+Se a assimetria for 0, os dados são perfeitamente simétricos.
+Como regra geral: Se a assimetria for menor que -1 ou maior que 1, a distribuição é muito distorcida.
+Se a assimetria estiver entre -0,5 e 0,5, a distribuição é aproximadamente simétrica.
+
+Usamos a transformação Boxcox e transformamos os dados e depois verificaremos a  assimetria.
+
+### Vinho Tinto
+
+Antes de transformar
+```{r chunk="idx_03_01" , echo=TRUE, eval=TRUE}
+apply(df_base_tinto, 2, skewness, na.rm =TRUE)
+```
+
+Transformado
+
+```{r chunk="idx_03_02" , echo=TRUE, eval=TRUE}
+
+#preparação para a transformação dos dados
+df_prep_tinto <- preProcess(df_base_tinto[,1:11], c("BoxCox", "center", "scale"))
+df_tinto <- data.frame(trans = predict(df_prep_tinto, df_base_tinto))
+
+#atribui os nomes originais 
+colnames(df_tinto) <- colnames(df_base_tinto)
+
+apply(df_tinto, 2, skewness, na.rm =TRUE)
+```
+
+### Vinho Branco
+
+Antes de transformar
+```{r chunk="idx_03_02" , echo=TRUE, eval=TRUE}
+apply(df_base_branco, 2, skewness, na.rm =TRUE)
+```
+
+Transformado
+
+```{r chunk="idx_03_03" , echo=TRUE, eval=TRUE}
+
+#preparação para a transformação dos dados
+df_prep_branco <- preProcess(df_base_branco[,1:11], c("BoxCox", "center", "scale"))
+df_branco <- data.frame(trans = predict(df_prep_branco, df_base_branco))
+
+#atribui os nomes originais 
+colnames(df_branco) <- colnames(df_base_branco)
+
+apply(df_branco, 2, skewness, na.rm =TRUE)
+```
+
+
+## Outliers
+
+A maioria das estatísticas paramétricas, como médias, desvios-padrão e correlações, e todas as estatísticas com base nelas, são altamente sensíveis a outliers. As premissas dos procedimentos estatísticos comuns, como regressão linear e ANOVA, também são baseadas nessas estatísticas, quando outliers podem perturbar a estatística. análise. Assim, nós removemos os outliers.
+
+Possivelmente, o passo mais importante na preparação de dados é identificar outliers. Como se trata de dados multivariados, consideramos apenas aqueles pontos que não possuem nenhum valor de variável de previsão para estar fora dos limites construídos pelos boxplots. A seguinte regra é aplicada:
+
+Um valor preditivo é considerado um valor discrepante somente se for maior que 3 Desvios Padrão. A lógica por trás dessa regra é que os valores extremos extremos estão todos na extremidade superior dos valores e as distribuições são todas positivamente distorcidas.
+
+### Vinho Tinto
+
+####Identificando os Outliers
+
+Iremos a seguir criar um dataframe somente para ter a quantidade de outliers identificados para cada variável, usaremos o comando abs para obter a posicão absoluta
+onde o desvio padrão é > 3 como ja fora transformado no passo anterior
+
+```{r chunk="idx_03_04" , echo=TRUE, eval=TRUE}
+
+outlier <- data.frame(matrix(ncol = 1, nrow = 1))
+colnames(outlier)<-"tipo"
+
+outlier$tipo = "Tinto"
+
+outlier$acidez_fixa <- count(df_tinto[abs(df_tinto$acidez_fixa)>3,])
+outlier$acidez_volatil <-count(df_tinto[abs(df_tinto$acidez_volatil)>3,])
+outlier$acido_citrico <-count(df_tinto[abs(df_tinto$acido_citrico)>3,])
+outlier$acucar_residual <-count(df_tinto[abs(df_tinto$acucar_residual)>3,])
+outlier$cloretos <-count(df_tinto[abs(df_tinto$cloretos)>3,])
+outlier$fsd <-count(df_tinto[abs(df_tinto$fsd)>3,])
+outlier$tsd <-count(df_tinto[abs(df_tinto$tsd)>3,])
+outlier$densidade <-count(df_tinto[abs(df_tinto$densidade)>3,])
+outlier$PH <-count(df_tinto[abs(df_tinto$PH)>3,])
+outlier$sulfatos <-count(df_tinto[abs(df_tinto$sulfatos)>3,])
+
+summary(outlier)
+
+```
+
+Encontramos 38 observações e iremos remover de nossa análise
+
+#### Removendo os outliers
+
+
+```{r chunk="idx_03_04" , echo=TRUE, eval=TRUE}
+
+df_tinto <- df_tinto[!abs(df_tinto$acidez_fixa)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$acido_citrico)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$cloretos)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$fsd)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$PH)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$sulfatos)>3,]
+
+```
+
+
+####Validando o Dado
+
+
+
+### Vinho Branco
+
+
+## Matriz de Correlação 
+
+  O primeiro passo para iniciar o processo de aplicação de modelos estatísticos é validar as correlações que possam indicar caracteristicas que determinam o fato.
+  e neste caso precisamos saber quais das variáveis podem agregar qualidade ao vinho
+  
+  
+
+
+# Regressão Linear
+
+## Vinho Tinto
+
+## Vinho Branco
+
+# Árvore de Regressão
+
+## Vinho Tinto
+
+## Vinho Branco
+
+
+# Árvore de Regressão
+
+## Vinho Tinto
+
+## Vinho Branco
+
+# Árvore de Decisão
+
+## Vinho Tinto
+
+## Vinho Branco
+
+# Modelo 4:  Regressão Logística
+
+## Vinho Tinto
+
+## Vinho Branco
+
+# PCA
+
+## Vinho Tinto
+
+## Vinho Branco
+
+# K-Means
+
+## Vinho Tinto
+
+## Vinho Branco
+
+# Conclusões
