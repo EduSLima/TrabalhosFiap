@@ -73,7 +73,7 @@ if(length(PacotesNovos)){ install.packages(PacotesNovos)} else {print("Todos os 
 
 ### Carregando os Pacotes
 
-```{r chunk="idx_01_02", echo=TRUE, eval=FALSE}
+```{r chunk="idx_01_02", echo=TRUE, eval=TRUE}
 lapply(Pacotes_Necessarios, require, character.only = TRUE)
 ```
 
@@ -111,7 +111,9 @@ nome_colunas <- c("id","acidez_fixa","acidez_volatil","acido_citrico","acucar_re
 #e escolhemos o read_csv2 justamente pelo fato do arquivo estar separado por ; ao invés de ,
 #o separador decimal também não é o . que é convencional e este comando ja os converte facilmente
 #skip = 1 para ignorar o cabecalho que mudamos para melhor entendimento
-vinhos <- read_csv2("./Arquivos/BaseWine_Red_e_White.csv" ,col_names = nome_colunas, skip = 1)
+
+setwd("/mnt/hgfs/kal1s/files/cyberAI/Training/Fiap/MBA/Disciplinas/TrabalhosFiap/EstatisticaIA/Final")
+vinhos <- read_csv2("Arquivos/BaseWine_Red_e_White.csv" ,col_names = nome_colunas, skip = 1)
 
 ```
 
