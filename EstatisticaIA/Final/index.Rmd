@@ -40,7 +40,7 @@ opts_knit$set(width = 75)
 
 </br>
 
-Integrantes:
+Integrantes do Grupo E2GR:
 
 * EDUARDO MORAIS           [ 334530 ]
 + EDUARDO SIQUEIRA DE LIMA [ 334304 ]
