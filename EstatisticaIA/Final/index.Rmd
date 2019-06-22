@@ -42,10 +42,10 @@ opts_knit$set(width = 75)
 
 Integrantes:
 
-* EDUARDO MORAIS [ 334530 ]
+* EDUARDO MORAIS           [ 334530 ]
 + EDUARDO SIQUEIRA DE LIMA [ 334304 ]
-+ GABRIEL SHIKAMA [ 334068 ]
-+ RICARDO CALIMANIS [ 334759]
++ GABRIEL SHIKAMA          [ 334068 ]
++ RICARDO CALIMANIS        [ 334759 ]
 
 Análise realizada no dataset WineQuality onde aplicaremos todas as técnicas aprendidas em sala de aula.
 
