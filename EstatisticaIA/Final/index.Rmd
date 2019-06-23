@@ -562,7 +562,7 @@ corrgram(df_branco, type="data", lower.panel=panel.conf,
 
 # Regressão Linear
 
-### Teoria
+## Técnica
   Regressão linear é uma equação para se estimar a condicional (valor esperado) de uma variável y, dados os valores de algumas outras variáveis x.
 
   Exemplo de regressão linear.
@@ -598,6 +598,7 @@ split <- sample.split(df_tinto$qualidade, SplitRatio = 0.8)
 df_vinho_tinto_treino <- subset(df_tinto, split == TRUE)
 df_vinho_tinto_teste  <- subset(df_tinto, split == FALSE)
 
+
 ```
 
 
@@ -609,6 +610,54 @@ Modelo_01 <- lm(qualidade~ acidez_fixa+acidez_volatil+acido_citrico+acucar_resid
                 data = df_vinho_tinto_treino)
 
 summary(Modelo_01)
+```
+### Segundo Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+Modelo_02 <- lm(qualidade ~ grau_alcolico + acidez_volatil + sulfatos, data = df_vinho_tinto_treino)
+
+summary(Modelo_02)
+plot(Modelo_02)
+```
+
+### Treino do Segundo Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+df_vinho_tinto_treino$Predicao.Qualidade = predict(Modelo_02, newdata = subset(df_vinho_tinto_treino, select=c(qualidade, grau_alcolico, acidez_volatil, acido_citrico, sulfatos)))
+
+treino.corr = round(cor(df_vinho_tinto_treino$Predicao.Qualidade, df_vinho_tinto_treino$qualidade), 2)
+treino.RMSE = round(sqrt(mean((df_vinho_tinto_treino$Predicao.Qualidade - df_vinho_tinto_treino$qualidade)^2)))
+treino.MAE = round(mean(abs(df_vinho_tinto_treino$Predicao.Qualidade - df_vinho_tinto_treino$qualidade)))
+
+c(treino.corr ^ 2, treino.RMSE, treino.MAE)
+
+```
+
+### Teste do Segundo Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+df_vinho_tinto_teste$Predicao.Qualidade = predict(Modelo_02, newdata = subset(df_vinho_tinto_teste, select=c(qualidade, grau_alcolico, acidez_volatil, acido_citrico, sulfatos)))
+
+teste.corr = round(cor(df_vinho_tinto_teste$Predicao.Qualidade, df_vinho_tinto_teste$qualidade), 2)
+teste.RMSE = round(sqrt(mean((df_vinho_tinto_teste$Predicao.Qualidade - df_vinho_tinto_teste$qualidade)^2)))
+teste.MAE = round(mean(abs(df_vinho_tinto_teste$Predicao.Qualidade - df_vinho_tinto_teste$qualidade)))
+
+c(teste.corr ^ 2, teste.RMSE, teste.MAE)
+```
+
+### Relacionamento da Variável "qualidade"
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+par(mfrow=c(1,2))
+plot(df_tinto$qualidade, df_tinto$grau_alcolico, main = "qualidade vs grau_alcolico", xlab="qualidade", ylab = "grau_alcolico", col = 3, pch = 1)
+plot(df_tinto$qualidade, df_tinto$acidez_volatil, main = "qualidade vs acidez_volatil", xlab="qualidade", ylab = "acidez_volatil", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_tinto$qualidade, df_tinto$acido_citrico, main = "qualidade vs acido_citrico", xlab="qualidade", ylab = "acido_citrico", col = 3, pch = 1)
+plot(df_tinto$qualidade, df_tinto$sulfatos, main = "qualidade vs sulfatos", xlab="qualidade", ylab = "sulfatos", col = 3, pch = 1)
 ```
 
 ## Vinho Branco
@@ -623,19 +672,71 @@ split <- sample.split(df_branco$qualidade, SplitRatio = 0.8)
 #dividindo o dataset para treino e teste
 df_vinho_branco_treino <- subset(df_branco, split == TRUE)
 df_vinho_branco_teste  <- subset(df_branco, split == FALSE)
-
 ```
 
 ### Primeiro Modelo
 
 ```{r chunk="idx_04_05" , echo=TRUE, eval=TRUE}
-
 Modelo_01 <- lm(qualidade~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, 
                 data = df_vinho_branco_treino)
 
 summary(Modelo_01)
+plot(Modelo_01)
 ```
 
+### Treino do Primeiro Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+df_vinho_branco_treino$Predicao.Qualidade = predict(Modelo_01, newdata = subset(df_vinho_branco_treino, select=c(qualidade, acidez_fixa, acidez_volatil, acido_citrico, acucar_residual, cloretos, densidade, fsd, grau_alcolico, PH, sulfatos, tsd)))
+
+treino.corr = round(cor(df_vinho_branco_treino$Predicao.Qualidade, df_vinho_branco_treino$qualidade), 2)
+treino.RMSE = round(sqrt(mean((df_vinho_branco_treino$Predicao.Qualidade - df_vinho_branco_treino$qualidade)^2)))
+treino.MAE = round(mean(abs(df_vinho_branco_treino$Predicao.Qualidade - df_vinho_branco_treino$qualidade)))
+
+c(treino.corr ^ 2, treino.RMSE, treino.MAE)
+
+```
+
+### Teste do Primeiro Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+df_vinho_branco_teste$Predicao.Qualidade = predict(Modelo_01, newdata = subset(df_vinho_branco_teste, select=c(qualidade, acidez_fixa, acidez_volatil, acido_citrico, acucar_residual, cloretos, densidade, fsd, grau_alcolico, PH, sulfatos, tsd)))
+
+teste.corr = round(cor(df_vinho_branco_teste$Predicao.Qualidade, df_vinho_branco_teste$qualidade), 2)
+teste.RMSE = round(sqrt(mean((df_vinho_branco_teste$Predicao.Qualidade - df_vinho_branco_teste$qualidade)^2)))
+teste.MAE = round(mean(abs(df_vinho_branco_teste$Predicao.Qualidade - df_vinho_branco_teste$qualidade)))
+
+c(teste.corr ^ 2, teste.RMSE, teste.MAE)
+```
+
+### Relacionamento da Variável "qualidade"
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$grau_alcolico, main = "qualidade vs grau_alcolico", xlab="qualidade", ylab = "grau_alcolico", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$acidez_volatil, main = "qualidade vs acidez_volatil", xlab="qualidade", ylab = "acidez_volatil", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$acido_citrico, main = "qualidade vs acido_citrico", xlab="qualidade", ylab = "acido_citrico", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$sulfatos, main = "qualidade vs sulfatos", xlab="qualidade", ylab = "sulfatos", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$acidez_fixa, main = "qualidade vs acidez_fixa", xlab="qualidade", ylab = "acidez_fixa", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$acucar_residual, main = "qualidade vs acucar_residual", xlab="qualidade", ylab = "acucar_residual", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$cloretos, main = "qualidade vs cloretos", xlab="qualidade", ylab = "cloretos", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$densidade, main = "qualidade vs densidade", xlab="qualidade", ylab = "densidade", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$fsd, main = "qualidade vs fsd", xlab="qualidade", ylab = "fsd", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$PH, main = "qualidade vs PH", xlab="qualidade", ylab = "PH", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$tsd, main = "qualidade vs tsd", xlab="qualidade", ylab = "tsd", col = 3, pch = 1)
+```
 
 
 # Árvore de Regressão
@@ -698,7 +799,7 @@ Para vinho branco temos uma acurácia de 78%
 
 # Árvore de Decisão
 
-### Técnica
+## Técnica
 
 É muito utilizada para aprendizagem indutiva e é extremamente prática.
 
@@ -769,7 +870,7 @@ confusionMatrix(DT_Preditor$factor, df_vinho_branco_teste$GrupoQualidade)
 
 notamos que acertamos em 77% dos casos
 
-# Modelo 4:  Regressão Logística
+# Regressão Logística
 
 ## Técnica
 
@@ -822,7 +923,10 @@ confusionMatrix(RL_Preditor_Corte, df_vinho_branco_teste$GrupoQualidade)
 
 # PCA
 
-adicionar algo sobre o pca
+## Técnica
+
+ Este algoritmo provê redução de dimensionalidade. Algumas vezes você tem uma grande quantidade de características, provavelmente muito correlacionadas entre si, e os modelos podem facilmente serem sobreajustados em um grande conjunto de dados. Neste cenário, aplica-se PCA.
+ PCA calcula a projeção dos dados em algum vetor que maximize a variança dos dados e perca a menor quantidade de informação possível. Surpreendentemente, estes vetores são os autovetores da matriz de correlação das características de um conjunto de dados.
 
 ## Vinho Tinto
 
@@ -833,27 +937,163 @@ TintoPCA = prcomp(df_base_tinto[1:12] , scale. = TRUE)
 summary(TintoPCA)
 
 plot(1:12, TintoPCA$sdev^2, type = "b", xlab = "Componente",
-     ylab = "Variância", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+     ylab = "Variância", main = "Vinhos tintos", sub = "Dados não normalizados previamente", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
 
 ```
 
-## Vinho Branco
+## Vinho Tinto base normalizada
 
 ```{r chunk="idx_08_02" , echo=TRUE, eval=TRUE}
+
+TintoPCA = prcomp(df_tinto[1:12] , scale. = TRUE)
+
+summary(TintoPCA)
+
+plot(1:12, TintoPCA$sdev^2, type = "b", xlab = "Componente",
+     ylab = "Variância", main = "Vinhos tintos", sub = "Dados normalizados previamente(Box Cox)", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+
+
+
+```
+
+
+
+## Vinho Branco
+
+```{r chunk="idx_08_03" , echo=TRUE, eval=TRUE}
 
 BrancoPCA = prcomp(df_base_branco[1:12], scale. = TRUE)
 
 summary(BrancoPCA)
 
 plot(1:12, BrancoPCA$sdev^2, type = "b", xlab = "Componente",
-     ylab = "Variância", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+     ylab = "Variância", main = "Vinhos brancos", sub = "Dados não normalizados previamente", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
 
 ```
 
+
+## Vinho Branco base normalizada
+
+```{r chunk="idx_08_04" , echo=TRUE, eval=TRUE}
+
+BrancoPCA = prcomp(df_branco[1:12], scale. = TRUE)
+
+summary(BrancoPCA)
+
+plot(1:12, BrancoPCA$sdev^2, type = "b", xlab = "Componente",
+     ylab = "Variância", main = "Vinhos brancos", sub = "Dados normalizados previamente(Box Cox)", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+
+```
+
+## Conclusão sobre PCA base normaliza vs base bruta
+
+Esses 4 gráficos anteriores foram plotados para gerar a discussão sobre utilizar PCA com dados normalizados previamente ou não, para uma comparação de qual estratégia maximiza mais a variança dos dados.
+
+O próprio algoritmo PCA trabalha na a variancia dos dados, mas usando os dados previamente tratados em relação a variancia com a função Box Cox, vemos que os gráficos dos dados previamente tratado são mais uniformes e é menor a discrepância de valors em certas componentes.
+
+
 # K-Means
+
+## Técnica
+
+K-means é um algoritmo de aprendizagem não supervisionada que agrupa dados com base em sua similaridade. Aprendizagem não supervisionada significa que não há resultado a ser previsto, e o algoritmo apenas tenta encontrar padrões nos dados. No k-means, temos que especificar o número de grupos em que desejamos que os dados sejam agrupados. O algoritmo atribui aleatoriamente cada observação para um cluster, e encontra o centróide de cada cluster. Em seguida, o algoritmo segue em dois passos:
+
+• Redistribui pontos de dados para o cluster cujo centróide é mais próximo.
+
+• Calcula novo centróide para cada cluster.
+
+Estes dois passos são repetidos até que a variação dentro do conjunto não possa mais ser reduzida. A variação dentro do cluster é calculada como a soma da distância euclidiana entre os pontos de dados e os os respectivos centróides de clusters.
 
 ## Vinho Tinto
 
+```{r chunk="idx_09_01" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_tinto[9:10], 5);
+Resultado$size 
+
+plot(df_tinto[9:10], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[9:10], col="RED", pch=7, cex=4)
+
+```
+
+
+
+```{r chunk="idx_09_02" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_tinto[11:10], 5);
+Resultado$size 
+
+plot(df_tinto[11:10], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[11:10], col="RED", pch=7, cex=4)
+
+```
+
+
+```{r chunk="idx_09_03" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_tinto[11:9], 5)
+Resultado$size 
+
+plot(df_tinto[11:9], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[11:9], col="RED", pch=7, cex=4)
+
+
+```
+### Algumas relações que conseguimos inferir com algortimo K-means para as variáveis alcoólico, sulfatos e pH na base vinho tinto
+
+Baixo teor alcoólico, baixos sulfatos
+baixos sulfatos, álcool elevado
+baixo pH, baixo teor alcoólico
+pH elevado, álcool alto
+pH elevado, baixos sulfatos
+baixo pH, altos sulfatos
+
+
 ## Vinho Branco
 
+
+```{r chunk="idx_09_04" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_branco[9:10], 5);
+Resultado$size 
+
+plot(df_branco[9:10], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[9:10], col="RED", pch=7, cex=4)
+
+```
+
+
+```{r chunk="idx_09_05" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_branco[11:10], 5);
+Resultado$size 
+
+plot(df_branco[11:10], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[11:10], col="RED", pch=7, cex=4)
+
+```
+
+
+```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_branco[11:9], 5)
+Resultado$size 
+
+plot(df_branco[11:9], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[11:9], col="RED", pch=7, cex=4)
+
+```
+
+### Algumas relações que conseguimos inferir com algortimo K-means para as variáveis alcoólico, sulfatos e pH na base vinho branco
+
+Para vinh branco é possível visualizar que para pH muito não temos tanto sulfatos altos como na base vinho tintos e que há maior número de dados na faixa intermediária (-1 à 1, em ambos eixos), em relação a base vinho tintos
+
+
+Na relação grau alcoólico e sulfatos, vemos que na base de vinhos brancos os dados são mais bem distribuídos, onde é notório que para grau alcoólico mais elevado temos tanto sultados baixo como altos.
+
+Na comparação, das 3 variáveis juntas, é possível verificar que há maior quantidade de dados na faixa de pH baixo e grau alcoólico alto na base vinhos brancos do que vinhos tintos.
+
+
+
 # Conclusões
+
