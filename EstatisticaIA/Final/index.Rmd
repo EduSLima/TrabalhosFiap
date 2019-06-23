@@ -192,7 +192,7 @@ Imprimindo Histogramas das variaveis
 ```{r chunk="idx_02_08" , echo=TRUE, eval=TRUE}
 attach(vinhos)
 
-Rotulos_Colunas <-c("id", "acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+Rotulos_Colunas <-c("acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
                     "PH","sulfatos","grau alcolico","qualidade","tipo")
 
 grafico_lista <- vector("list", length = length(Rotulos_Colunas)-2)
