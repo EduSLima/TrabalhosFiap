@@ -602,7 +602,7 @@ df_vinho_tinto_teste  <- subset(df_tinto, split == FALSE)
 ```
 
 
-### Primeiro Modelo
+### Modelo Vinho Tinto
 
 ```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
 
@@ -610,21 +610,14 @@ Modelo_01 <- lm(qualidade~ acidez_fixa+acidez_volatil+acido_citrico+acucar_resid
                 data = df_vinho_tinto_treino)
 
 summary(Modelo_01)
-```
-### Segundo Modelo
-
-```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
-Modelo_02 <- lm(qualidade ~ grau_alcolico + acidez_volatil + sulfatos, data = df_vinho_tinto_treino)
-
-summary(Modelo_02)
-plot(Modelo_02)
+plot(Modelo_01)
 ```
 
-### Treino do Segundo Modelo
+### Treino do Modelo
 
 ```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
 
-df_vinho_tinto_treino$Predicao.Qualidade = predict(Modelo_02, newdata = subset(df_vinho_tinto_treino, select=c(qualidade, grau_alcolico, acidez_volatil, acido_citrico, sulfatos)))
+df_vinho_tinto_treino$Predicao.Qualidade = predict(Modelo_01, newdata = subset(df_vinho_tinto_treino, select=c(qualidade, acidez_fixa,acidez_volatil,acido_citrico,acucar_residual,cloretos,densidade,fsd,grau_alcolico,PH,sulfatos,tsd)))
 
 treino.corr = round(cor(df_vinho_tinto_treino$Predicao.Qualidade, df_vinho_tinto_treino$qualidade), 2)
 treino.RMSE = round(sqrt(mean((df_vinho_tinto_treino$Predicao.Qualidade - df_vinho_tinto_treino$qualidade)^2)))
@@ -634,11 +627,11 @@ c(treino.corr ^ 2, treino.RMSE, treino.MAE)
 
 ```
 
-### Teste do Segundo Modelo
+### Teste do Modelo
 
 ```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
 
-df_vinho_tinto_teste$Predicao.Qualidade = predict(Modelo_02, newdata = subset(df_vinho_tinto_teste, select=c(qualidade, grau_alcolico, acidez_volatil, acido_citrico, sulfatos)))
+df_vinho_tinto_teste$Predicao.Qualidade = predict(Modelo_01, newdata = subset(df_vinho_tinto_teste, select=c(qualidade, acidez_fixa,acidez_volatil,acido_citrico,acucar_residual,cloretos,densidade,fsd,grau_alcolico,PH,sulfatos,tsd)))
 
 teste.corr = round(cor(df_vinho_tinto_teste$Predicao.Qualidade, df_vinho_tinto_teste$qualidade), 2)
 teste.RMSE = round(sqrt(mean((df_vinho_tinto_teste$Predicao.Qualidade - df_vinho_tinto_teste$qualidade)^2)))
@@ -660,6 +653,14 @@ plot(df_tinto$qualidade, df_tinto$acido_citrico, main = "qualidade vs acido_citr
 plot(df_tinto$qualidade, df_tinto$sulfatos, main = "qualidade vs sulfatos", xlab="qualidade", ylab = "sulfatos", col = 3, pch = 1)
 ```
 
+### O Modelo de Regressão Linear para Vinho Tinto tem uma precisão prevista de "40%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(100,40), main="Regressão Linear (Vinho Tinto)", labels=c("","Precisão: 40%"))
+
+```
+
 ## Vinho Branco
 
 ### Separação dos Dados Treino e Teste
@@ -674,7 +675,7 @@ df_vinho_branco_treino <- subset(df_branco, split == TRUE)
 df_vinho_branco_teste  <- subset(df_branco, split == FALSE)
 ```
 
-### Primeiro Modelo
+### Modelo Vinho Branco
 
 ```{r chunk="idx_04_05" , echo=TRUE, eval=TRUE}
 Modelo_01 <- lm(qualidade~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, 
@@ -684,7 +685,7 @@ summary(Modelo_01)
 plot(Modelo_01)
 ```
 
-### Treino do Primeiro Modelo
+### Treino do Modelo
 
 ```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
 
@@ -698,7 +699,7 @@ c(treino.corr ^ 2, treino.RMSE, treino.MAE)
 
 ```
 
-### Teste do Primeiro Modelo
+### Teste do Modelo
 
 ```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
 
@@ -738,6 +739,13 @@ par(mfrow=c(1,2))
 plot(df_branco$qualidade, df_branco$tsd, main = "qualidade vs tsd", xlab="qualidade", ylab = "tsd", col = 3, pch = 1)
 ```
 
+### O Modelo de Regressão Linear para Vinho Branco tem uma precisão prevista de "31%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(100,31), main="Regressão Linear (Vinho Branco)", labels=c("","Precisão: 31%"))
+
+```
 
 # Árvore de Regressão
 
@@ -773,7 +781,13 @@ confusionMatrix(RT_Valores_Corte, df_vinho_tinto_teste$GrupoQualidade)
 
 ```
 
-86% de acertividade 
+### O Modelo de Árvore de Regressão para Vinho Tinto tem uma precisão prevista de "86%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(86,100), main="Árvore de Regressão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+
+```
 
 ## Vinho Branco
 
@@ -795,7 +809,13 @@ confusionMatrix(RT_Valores_Corte, df_vinho_branco_teste$GrupoQualidade)
 
 ```
 
-Para vinho branco temos uma acurácia de 78%
+### O Modelo de Árvore de Regressão para Vinho Branco tem uma precisão prevista de "78%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(78,100), main="Árvore de Regressão (Vinho Branco)", labels=c("","Precisão: 78%"))
+
+```
 
 # Árvore de Decisão
 
@@ -850,6 +870,13 @@ confusionMatrix(DT_Preditor$factor, df_vinho_tinto_teste$GrupoQualidade)
 
 Até agora notamos que este foi o modelo que mais acertou com `86%` de acurácia, justamente por que a técnica é capaz de prever com maior exatidao quais as variaveis mais importantes para determinar a qualidade.
 
+### O Modelo de Árvore de Decisão para Vinho Tinto tem uma precisão prevista de "86%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(86,100), main="Árvore de Decisão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+
+```
 
 ## Vinho Branco
 
@@ -868,7 +895,13 @@ DT_Preditor$factor <- as.factor(ifelse(DT_Preditor[["1"]] > DT_Preditor[["0"]],1
 confusionMatrix(DT_Preditor$factor, df_vinho_branco_teste$GrupoQualidade)
 ```
 
-notamos que acertamos em 77% dos casos
+### O Modelo de Árvore de Decisão para Vinho Branco tem uma precisão prevista de "78%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(78,100), main="Árvore de Decisão (Vinho Branco)", labels=c("","Precisão: 78%"))
+
+```
 
 # Regressão Logística
 
@@ -882,10 +915,12 @@ Podemos dizer de modo geral que funciona como uma regressão linear, com exceç�
 
 Como vimos, nosso dataset possui apenas dados numéricos, com exceção do tipo de vinho.
 
-### Criando modelo Árvore de Regressão Logística com todas as variáveis (quality: variável principal)
+### Criando modelo Árvore de Regressão Logística da variável de saída "qualidade" com todas as variáveis de entrada
 
 
 ## Vinho Tinto
+
+### Modelo Vinho Tinto
 
 ```{r chunk="idx_07_01" , echo=TRUE, eval=TRUE}
 
@@ -901,9 +936,17 @@ confusionMatrix(RL_Preditor_Corte, df_vinho_tinto_teste$GrupoQualidade)
 
 ```
 
-86% adicionar texto explicativo
+### O Modelo de Regressão Logística para Vinho Tinto tem uma precisão prevista de "86%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(86,100), main="Regressão Logística (Vinho Tinto)", labels=c("","Precisão: 86%"))
+
+```
 
 ## Vinho Branco
+
+### Modelo Vinho Branco
 
 ```{r chunk="idx_07_03" , echo=TRUE, eval=TRUE}
 
@@ -918,8 +961,14 @@ RL_Preditor_Corte <- as.factor(ifelse(RL_Preditor > 6,1,0))
 confusionMatrix(RL_Preditor_Corte, df_vinho_branco_teste$GrupoQualidade)
 
 ```
-78%
 
+### O Modelo de Regressão Logística para Vinho Branco tem uma precisão prevista de "78%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(78,100), main="Regressão Logística (Vinho Branco)", labels=c("","Precisão: 78%"))
+
+```
 
 # PCA
 
@@ -1095,5 +1144,27 @@ Na comparação, das 3 variáveis juntas, é possível verificar que há maior q
 
 
 
-# Conclusões
+# Conclusão
 
+## Precisão Prevista (Vinho Tinto)
+
+```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
+
+par(mfrow=c(2,2))
+pie(c(100,40), main="Regressão Linear (Vinho Tinto)", labels=c("","Precisão: 40%"))
+pie(c(86,100), main="Árvore de Regressão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+pie(c(86,100), main="Árvore de Decisão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+pie(c(86,100), main="Regressão Logística (Vinho Tinto)", labels=c("","Precisão: 86%"))
+
+```
+
+## Precisão Prevista (Vinho Branco)
+
+```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
+
+par(mfrow=c(2,2))
+pie(c(100,31), main="Regressão Linear (Vinho Branco)", labels=c("","Precisão: 31%"))
+pie(c(78,100), main="Árvore de Regressão (Vinho Branco)", labels=c("","Precisão: 78%"))
+pie(c(78,100), main="Árvore de Decisão (Vinho Branco)", labels=c("","Precisão: 78%"))
+pie(c(78,100), main="Regressão Logística (Vinho Branco)", labels=c("","Precisão: 78%"))
+```
