@@ -1,0 +1,1237 @@
+---
+title: "Análise Qualidade do Vinho"
+author: "FIAP-06IA"
+date: "`r Sys.Date()`"
+output:
+  rmdformats::readthedown:
+    self_contained: true
+    thumbnails: false
+    lightbox: false
+---
+
+
+```{r knitr_init, echo=FALSE, results="asis", cache=FALSE}
+library(rmarkdown)
+library(knitr)
+library(rmdformats)
+library(DT)
+
+## Global options
+options(max.print = "75")
+opts_chunk$set(echo = FALSE,
+	             cache = FALSE,
+               prompt = FALSE,
+               tidy = FALSE,
+               comment = NA,
+               message = FALSE,
+               warning = FALSE)
+opts_knit$set(width = 75)
+```
+
+# Inicio
+
+## Introdução
+
+<img src="Arquivos/vinho.jpg" style="width:25%; border:10px solid; margin-right: 20px" align="left">
+
+>Trabalho de conlusão </br>
+>Matéria   : CONCEITOS ESTATÍSTICOS PARA IA </br>
+>Professora: ADELAIDE ALVES DE OLIVEIRA </br>
+
+</br>
+
+Integrantes do Grupo E2GR:
+
+* EDUARDO MORAIS           [ 334530 ]
++ EDUARDO SIQUEIRA DE LIMA [ 334304 ]
++ GABRIEL SHIKAMA          [ 334068 ]
++ RICARDO CALIMANIS        [ 334759 ]
+
+Análise realizada no dataset WineQuality onde aplicaremos todas as técnicas aprendidas em sala de aula.
+
+
+## Preparando o Ambiente
+
+### Instalando os pacotes necessários
+
+
+Instalando os pacotes necessários para realizar as análises 
+```{r chunk="idx_01_01", echo=TRUE, eval=TRUE}
+
+#lista de pacotes que iremos utilizar no projeto
+Pacotes_Necessarios <- c("ggplot2","readr","dplyr","corrplot","plotly","skimr","GGally","gmodels","ggpubr","caTools",
+                         "caret" ,"rpart.plot","DT","e1071","corrgram")
+
+#com base nos pacotes instalados crio uma variavel somente com os pacotes 
+#que não temos ainda para realizar a instalação 
+#dos pacotes que de fato não possuimos
+PacotesNovos <- Pacotes_Necessarios[!(Pacotes_Necessarios %in% installed.packages()[,"Package"])]
+if(length(PacotesNovos)){ install.packages(PacotesNovos)} else {print("Todos os Pacotes Estão Instalados")}
+
+
+```
+
+### Carregando os Pacotes
+
+```{r chunk="idx_01_02", echo=TRUE, eval=TRUE}
+lapply(Pacotes_Necessarios, require, character.only = TRUE)
+```
+
+## Dataset
+
+### Carregando o DataSet
+
+A fim de facilitar a compreensão e desenvolvimento de nosso codigo decidimos mudar os nomes das colunas do data set, a tabela a baixo indica o nome original do arquivo e o nome que propuzemos
+
+### Lista DE - PARA das colunas
+
+Nome no Arquivo     |  Nome Traduzido
+----------------    |-----------------
+ID                  |ID (que não sera utilizado)
+fixed acidity       |acidez_fixa
+volatile acidity    |acidez_volatil
+citric acid         |acido_citrico	
+residual sugar      |acucar_residual
+chlorides           |cloretos
+free sulfur dioxide |fsd
+total sulfur dioxide|tsd
+density             |densidade
+pH                  |PH
+sulphates           |sulfatos
+alcohol             |grau_alcolico
+quality             |qualidade
+Vinho               |Tipo
+
+```{r chunk="idx_01_03" , echo=TRUE, eval=TRUE}
+#Criando uma variável nome_colunas que receberá os nomes das colunas que normalizaremos a fim de facilitar o resto da análise
+nome_colunas <- c("id","acidez_fixa","acidez_volatil","acido_citrico","acucar_residual","cloretos", "fsd", "tsd","densidade","PH", 
+                  "sulfatos","grau_alcolico","qualidade","tipo")
+
+#uso da biblioteca readr é para obter uma performance de carga melhor que a lib padrão do R
+#e escolhemos o read_csv2 justamente pelo fato do arquivo estar separado por ; ao invés de ,
+#o separador decimal também não é o . que é convencional e este comando ja os converte facilmente
+#skip = 1 para ignorar o cabecalho que mudamos para melhor entendimento
+
+setwd("C:/Users/Shikama/Downloads/R/TrabalhosFiap-master/EstatisticaIA/Final")
+vinhos <- read_csv2("Arquivos/BaseWine_Red_e_White.csv" ,col_names = nome_colunas, skip = 1)
+
+```
+
+# Análise Exploratória
+
+## Observando o DataFrame
+
+Exibindo as Dimensões do dataframe vinhos
+```{r chunk="idx_02_01" , echo=TRUE, eval=TRUE}
+
+dim(vinhos)
+
+```
+
+
+Exibindo a Estrutura do dataframe vinhos
+```{r chunk="idx_02_02" , echo=TRUE, eval=TRUE}
+
+str(vinhos)
+
+```
+
+## Validações Iniciais
+
+Exibindo a Sumario e um histograma inicial  do dataframe vinhos
+
+```{r chunk="idx_02_03" , echo=TRUE, eval=TRUE}
+options(width = 900)   #definindo o tamanho da area de impressão de saida do markdown
+options(max.print=500) # aumentando a saida da lista, sem esta opção alguns resultados tendem a ser cortados
+skim(vinhos[, names(vinhos) != "id"] ) #retirando a coluna ID da análise
+
+```
+
+Observa-se que:
+
+* O campo `acucar_residual`,`fsd`, `tsd` possuem um desvio padrão acima das demais variaveis
+* A maioria dos histogramas apresenta uma distribuição normal entretanto não centralizado o que pode indicar a presença de outliers
+
+
+### Checar presença de `nulos`
+```{r chunk="idx_02_04" , echo=TRUE, eval=TRUE}
+sapply(vinhos, function(x)all(is.na(x)))
+```
+
+O resultado acima nos descreve que não há presença de nulos na base, isto é indicado pelo retorno `FALSE` em cada variável
+
+### Checar presença de Registros Duplicados
+ 
+  Para prover melhor performance e acurácia de nossos modelos iremos verificar a existência de registros duplicados e removê-los se existir, mais antes é necessário remover uma coluna, ou simplesmente ignorar, que é a coluna ID que contem algum tipo de código incremental.
+
+```{r chunk="idx_02_05" , echo=TRUE, eval=TRUE}
+
+#removendo a coluna Id que não é necessária para nossa analise
+vinhos<- vinhos[-1]
+
+
+vinhos[duplicated(vinhos, fromLast = TRUE), ]
+
+```
+
+De fato existem 1176 registros duplicados onde:
+```{r chunk="idx_02_06" , echo=TRUE, eval=TRUE}
+count(vinhos[duplicated(vinhos, fromLast = TRUE), ], tipo)
+```
+
+Removendo as linhas duplicadas
+```{r chunk="idx_02_07" , echo=TRUE, eval=TRUE}
+
+vinhos<-vinhos[!duplicated(vinhos[-1], fromLast = TRUE), ]
+
+```
+
+### Histograma
+
+Imprimindo Histogramas das variaveis
+```{r chunk="idx_02_08" , echo=TRUE, eval=TRUE}
+attach(vinhos)
+
+Rotulos_Colunas <-c("acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+                    "PH","sulfatos","grau alcolico","qualidade","tipo")
+
+grafico_lista <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:13){
+  grafico_lista[[i-1]] <- plot_ly(x = as.formula(vinhos[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+subplot(grafico_lista,  nrows = 4)
+
+
+```
+
+
+Podemos observar que quase em todas variáveis possuem um desenho ser similar à uma distribuição normal no entanto isso se deu pois mais à esquerda exceto grau alcoolico. Isso pode indicar presença de Outliers. A Conslusão que já se pode tirar é que há erros no Teor alcoolico, haja visto que é sabido que não existe vinhos com teor alcoolico a baixo de 8. 
+
+
+## Explorando o DataSet
+
+  Nosso intuito nesta parte é entender se podemos considerar o dataset como um todo ou se devemos observá-los por tipo de vinho para isso iremos agregar os dados por tipo de vinho 
+  e ver como as variáveis se comportam
+
+```{r chunk="idx_02_12" , echo=TRUE, eval=TRUE}
+  
+aggregate(vinhos[,-12],  by = list(vinhos$tipo),  FUN = sd)
+
+```
+
+Nos parece que há algumas diferenças significativas levando em consideração, os desvios padrão agregado por tipo de vinho onde:
+
+  | Observações
+--|-------------------------------------
+1 | Acidez fixa é quase o dobro em vinhos `Tintos`
+2 | Acidez Volatil é maior 0.7 desvios em `Tintos`
+3 | Ácido Cítrico é quase 4 desvios maior em `Brancos`
+4 | Cloretos maior que 2 desvios em `Tintos`
+5 | Sulfatos (fsd e tsd) é Maior em `Brancos`
+6 | Densidade é maior em  `Brancos`
+
+Entretanto a Qualidade não varia, ou seja em nossa perceção as características que determinam qualidade para os vinhos são diferentes e iremos ver a seguir a correlação dessas variáveis.
+
+
+# Preparação dos Dados
+
+## Inicio
+
+### Transformação de qualidade em variável categórica
+
+Decidimos por classificar a nota da qualidade inicialmente em três grupos:
+
+Grupo   | Notas
+--------|----------
+Ruim    | 0 ~ 5.99
+Regular | 6 ~ 7.99
+Bom     | >= 8
+
+Neste caso, poderíamos utilizar algoritmos supervisionados como o K-means pra predizer em qual categoria um vinho se encontra.
+
+Porém, consideramos que isso não faria sentido para rodar os modelos não supervisionados.
+
+Para rodar este modelo, decidimos criar a variável `GrupoQualidade`, sendo qualquer `qualidade` com valor maior ou superior a 6 é classificado como vinho "BOM". A variável `GrupoQualidade` será nossa variável dependente no caso.
+
+```{r chunk="idx_03_01" , echo=TRUE, eval=TRUE}
+
+vinhos$GrupoQualidade  <- as.factor(ifelse(vinhos$qualidade > 6,1,0))
+vinhos$GrupoQualidadeF <- as.factor(ifelse(vinhos$qualidade > 'Bom','Regular','Ruim'))
+
+```
+
+
+  Como Identificamos que pode fazer sentido analisar o vinho de maneira separada por tipo já que muitas variáveis tendem a se comportar de forma diferente vamos iniciar a preparação dos
+dados separando o dataset em 2 :
+`df_base_tinto` e `df_base_branco`
+
+```{r chunk="idx_03_02" , echo=TRUE, eval=TRUE}
+  
+  df_base_tinto  <-as.data.frame(subset(vinhos[,1:15], tipo=="RED"))
+  df_base_branco <-as.data.frame(subset(vinhos[,1:15], tipo!="RED"))
+  
+```
+
+
+## Transformação Box Cox 
+
+  Em estatística, uma transformação de potência é uma família de funções que são aplicadas para criar a transformação monotônica de dados usando funções de potência. Esta é uma técnica de transformação de dados útil usada para estabilizar a variância, tornar os dados mais semelhantes à distribuição normal, melhorar a validade das medidas de associação (como a correlação de Pearson entre as variáveis) e para outros procedimentos de estabilização de dados.
+
+  Tanto a forma linear quanto a logarítmica são dois casos particulares de uma família mais extensa de transformações não-lineares. A transformação de potência é definida como uma função de variação contínua, em relação ao parâmetro de potência ?? (lambda), ou seja, x??. Uma classe geral de transformação que pode ser utilizada é a de Box-Cox, definida por:
+
+para ?? diferente de 0
+$$f_\lambda(x) = \frac{(x)^\lambda - 1}{\lambda} $$ 
+
+para ?? = 0
+$$f_0 = log(x)$$ 
+
+Se a assimetria for 0, os dados são perfeitamente simétricos.
+Como regra geral: Se a assimetria for menor que -1 ou maior que 1, a distribuição é muito distorcida.
+Se a assimetria estiver entre -0,5 e 0,5, a distribuição é aproximadamente simétrica.
+
+Usamos a transformação Boxcox e transformamos os dados e depois verificaremos a  assimetria.
+
+### Vinho Tinto
+
+Antes de transformar
+```{r chunk="idx_03_01" , echo=TRUE, eval=TRUE}
+apply(df_base_tinto[1:12], 2, skewness, na.rm =TRUE)
+```
+
+Transformado
+
+```{r chunk="idx_03_02" , echo=TRUE, eval=TRUE}
+
+#preparação para a transformação dos dados
+df_prep_tinto <- preProcess(df_base_tinto[,1:12], c("BoxCox", "center", "scale"))
+df_tinto <- data.frame(trans = predict(df_prep_tinto, df_base_tinto))
+
+df_tinto
+
+#remove df desnecessario
+rm("df_prep_tinto")
+
+#atribui os nomes originais 
+colnames(df_tinto) <- colnames(df_base_tinto)
+
+apply(df_tinto[1:12], 2, skewness, na.rm =TRUE)
+```
+
+### Vinho Branco
+
+Antes de transformar
+```{r chunk="idx_03_02" , echo=TRUE, eval=TRUE}
+apply(df_base_branco[1:12], 2, skewness, na.rm =TRUE)
+```
+
+Transformado
+
+```{r chunk="idx_03_03" , echo=TRUE, eval=TRUE}
+
+#preparação para a transformação dos dados
+df_prep_branco <- preProcess(df_base_branco[,1:12], c("BoxCox", "center", "scale"))
+df_branco <- data.frame(trans = predict(df_prep_branco, df_base_branco))
+
+#atribui os nomes originais 
+colnames(df_branco) <- colnames(df_base_branco)
+
+#remove df desnecessario
+rm("df_prep_branco")
+
+
+apply(df_branco[1:12], 2, skewness, na.rm =TRUE)
+```
+
+
+## Outliers
+
+A maioria das estatísticas paramétricas, como médias, desvios-padrão e correlações, e todas as estatísticas com base nelas, são altamente sensíveis a outliers. As premissas dos procedimentos estatísticos comuns, como regressão linear e ANOVA, também são baseadas nessas estatísticas, quando outliers podem perturbar a estatística. análise. Assim, nós removemos os outliers.
+
+Possivelmente, o passo mais importante na preparação de dados é identificar outliers. Como se trata de dados multivariados, consideramos apenas aqueles pontos que não possuem nenhum valor de variável de previsão para estar fora dos limites construídos pelos boxplots. A seguinte regra é aplicada:
+
+Um valor preditivo é considerado um valor discrepante somente se for maior que 3 Desvios Padrão. A lógica por trás dessa regra é que os valores extremos extremos estão todos na extremidade superior dos valores e as distribuições são todas positivamente distorcidas.
+
+### Vinho Tinto
+
+#### Identificando os Outliers
+
+Iremos a seguir criar um dataframe somente para ter a quantidade de outliers identificados para cada variável, usaremos o comando abs para obter a posicão absoluta
+onde o desvio padrão é > 3 como ja fora transformado no passo anterior
+
+```{r chunk="idx_03_04" , echo=TRUE, eval=TRUE}
+
+outlier <- data.frame(matrix(ncol = 1, nrow = 1))
+colnames(outlier)<-"tipo"
+
+outlier$tipo = "Tinto"
+
+outlier$acidez_fixa <- count(df_tinto[abs(df_tinto$acidez_fixa)>3,])
+outlier$acidez_volatil <-count(df_tinto[abs(df_tinto$acidez_volatil)>3,])
+outlier$acido_citrico <-count(df_tinto[abs(df_tinto$acido_citrico)>3,])
+outlier$acucar_residual <-count(df_tinto[abs(df_tinto$acucar_residual)>3,])
+outlier$cloretos <-count(df_tinto[abs(df_tinto$cloretos)>3,])
+outlier$fsd <-count(df_tinto[abs(df_tinto$fsd)>3,])
+outlier$tsd <-count(df_tinto[abs(df_tinto$tsd)>3,])
+outlier$densidade <-count(df_tinto[abs(df_tinto$densidade)>3,])
+outlier$PH <-count(df_tinto[abs(df_tinto$PH)>3,])
+outlier$sulfatos <-count(df_tinto[abs(df_tinto$sulfatos)>3,])
+outlier$grau_alcolico <-count(df_tinto[abs(df_tinto$grau_alcolico)>3,])
+
+summary(outlier)
+
+```
+
+Encontramos 67 observações e iremos remover de nossa análise
+
+#### Removendo os outliers
+
+
+```{r chunk="idx_03_04" , echo=TRUE, eval=TRUE}
+
+df_tinto <- df_tinto[!abs(df_tinto$acidez_fixa)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$acidez_volatil)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$acido_citrico)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$acucar_residual)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$cloretos)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$fsd)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$densidade)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$PH)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$sulfatos)>3,]
+df_tinto <- df_tinto[!abs(df_tinto$grau_alcolico)>3,]
+
+```
+
+
+
+
+#### Validando o Dado {.tabset .tabset-fade}
+
+É possivel notar que após a remoção dos outliers os dados se encontram mais normalizados
+
+##### Antes  
+
+```{r chunk="idx_03_05" , echo=TRUE, eval=TRUE}
+attach(df_base_tinto)
+
+Rotulos_Colunas <-c( "acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+                    "PH","sulfatos","grau alcolico","qualidade")
+
+p_1 <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:12){
+  p_1[[i-1]] <- plot_ly(x = as.formula(df_base_tinto[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+
+subplot(p_1,  nrows = 4)
+```
+
+##### Depois
+
+```{r chunk="idx_03_06" , echo=TRUE, eval=TRUE}
+attach(df_tinto)
+
+p_2 <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:11){
+  p_2[[i-1]] <- plot_ly(x = as.formula(df_tinto[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+
+subplot(p_2,  nrows = 4)
+
+```
+
+
+
+### Vinho Branco
+
+
+```{r chunk="idx_03_07" , echo=TRUE, eval=TRUE}
+
+outlier <- data.frame(matrix(ncol = 1, nrow = 1))
+colnames(outlier)<-"tipo"
+
+outlier$tipo = "Branco"
+
+outlier$acidez_fixa <- count(df_branco[abs(df_branco$acidez_fixa)>3,])
+outlier$acidez_volatil <-count(df_branco[abs(df_branco$acidez_volatil)>3,])
+outlier$acido_citrico <-count(df_branco[abs(df_branco$acido_citrico)>3,])
+outlier$acucar_residual <-count(df_branco[abs(df_branco$acucar_residual)>3,])
+outlier$cloretos <-count(df_branco[abs(df_branco$cloretos)>3,])
+outlier$fsd <-count(df_branco[abs(df_branco$fsd)>3,])
+outlier$tsd <-count(df_branco[abs(df_branco$tsd)>3,])
+outlier$densidade <-count(df_branco[abs(df_branco$densidade)>3,])
+outlier$PH <-count(df_branco[abs(df_branco$PH)>3,])
+outlier$sulfatos <-count(df_branco[abs(df_branco$sulfatos)>3,])
+outlier$grau_alcolico <-count(df_branco[abs(df_branco$grau_alcolico)>3,])
+
+summary(outlier)
+
+```
+
+Encontramos 153 observações fora do padrão e iremos remover de nossa análise
+
+#### Removendo os outliers
+
+
+```{r chunk="idx_03_08" , echo=TRUE, eval=TRUE}
+
+df_branco <- df_branco[!abs(df_branco$acidez_fixa)>3,]
+df_branco <- df_branco[!abs(df_branco$acidez_volatil)>3,]
+df_branco <- df_branco[!abs(df_branco$acido_citrico)>3,]
+df_branco <- df_branco[!abs(df_branco$cloretos)>3,]
+df_branco <- df_branco[!abs(df_branco$fsd)>3,]
+df_branco <- df_branco[!abs(df_branco$tsd)>3,]
+df_branco <- df_branco[!abs(df_branco$densidade)>3,]
+df_branco <- df_branco[!abs(df_branco$PH)>3,]
+df_branco <- df_branco[!abs(df_branco$sulfatos)>3,]
+
+```
+
+
+
+
+#### Validando o Dado {.tabset .tabset-fade}
+
+Assim como no vinho tinto, temos a mesma percepção de com poucas extrações o dado ficou também mais proximo do normal 
+
+##### Antes  
+
+```{r chunk="idx_03_05" , echo=TRUE, eval=TRUE}
+attach(df_base_branco)
+
+Rotulos_Colunas <-c("id", "acidez_fixa","acidez volatil"	,"acido citrico","acucar residual","cloretos","fsd","tsd","densidade",			
+                    "PH","sulfatos","grau alcolico","qualidade","tipo")
+
+p_1 <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:11){
+  p_1[[i-1]] <- plot_ly(x = as.formula(df_base_branco[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+
+subplot(p_1,  nrows = 4)
+```
+
+##### Depois
+
+```{r chunk="idx_03_06" , echo=TRUE, eval=TRUE}
+attach(df_branco)
+
+p_2 <- vector("list", length = length(Rotulos_Colunas)-2)
+
+for(i in 2:11){
+  p_2[[i-1]] <- plot_ly(x = as.formula(df_branco[i]),   type = 'histogram', name = Rotulos_Colunas[i])
+}  
+
+subplot(p_2,  nrows = 4)
+
+```
+
+
+# Matriz de Correlação 
+
+  O primeiro passo para iniciar o processo de aplicação de modelos estatísticos é validar as correlações que possam indicar caracteristicas que determinam o fato.E neste caso precisamos saber quais das variáveis podem agregar qualidade ao vinho.
+  
+
+## Vinho Tinto 
+
+```{r chunk="idx_03_07" , echo=TRUE, eval=TRUE}
+
+corrplot(cor(df_tinto[1:12]), type = "lower")
+```  
+ 
+```{r chunk="idx_03_08" , echo=TRUE, eval=TRUE}
+
+corrgram(df_tinto[1:12], type="data", lower.panel=panel.conf, 
+         upper.panel=panel.shade, main= "Correlações para Vinho Tinto", order=T, cex.labels=1.1)
+```   
+
+
+## Vinho Branco  
+
+```{r chunk="idx_03_07" , echo=TRUE, eval=TRUE}
+
+corrplot(cor(df_branco[1:12]), type = "lower")
+```  
+ 
+```{r chunk="idx_03_08" , echo=TRUE, eval=TRUE}
+
+corrgram(df_branco, type="data", lower.panel=panel.conf, 
+         upper.panel=panel.shade, main= "Correlações para Vinho Branco", order=T, cex.labels=1.1)
+```   
+
+# Regressão Linear
+
+## Técnica
+  Regressão linear é uma equação para se estimar a condicional (valor esperado) de uma variável y, dados os valores de algumas outras variáveis x.
+
+  Exemplo de regressão linear.
+    A regressão, em geral, tem como objectivo tratar de um valor que não se consegue estimar inicialmente.
+
+  A regressão linear é chamada "linear" porque se considera que a relação da resposta às variáveis é uma função linear de alguns parâmetros. Os modelos de regressão que não são uma função linear dos parâmetros se chamam modelos de regressão não-linear. Sendo uma das primeiras formas de análise regressiva a ser estudada rigorosamente, e usada extensamente em aplicações práticas. Isso acontece porque modelos que dependem de forma linear dos seus parâmetros desconhecidos, são mais fáceis de ajustar que os modelos não-lineares aos seus parâmetros, e porque as propriedades estatísticas dos estimadores resultantes são fáceis de determinar.[1]
+
+### Formula 
+
+  $$y_{i} = \alpha + \beta X_{i} + \varepsilon_{i}$$
+
+onde:
+  
+$$y_{i}$$: Variável explicada (dependente); representa o que o modelo tentará prever
+$$\alpha$$: É uma constante, que representa a interceptação da reta com o eixo vertical;
+$$\beta$$: Representa a inclinação (coeficiente angular) em relação à variável explicativa;
+$$X_{i}$$: Variável explicativa (independente);
+$$\varepsilon _{i}}$$: Representa todos os factores residuais mais os possíveis erros de medição. O seu comportamento é aleatório, devido à natureza dos factores que encerra. Para que essa fórmula possa ser aplicada, os erros devem satisfazer determinadas hipóteses, que são: terem distribuição normal, com a mesma variância independentes e independentes da variável explicativa X, ou seja, i.i.d. (independentes e identicamente distribuídas).
+
+fonte: https://pt.wikipedia.org/wiki/Regress%C3%A3o_linear
+
+
+## Vinho Tinto
+
+### Separação dos Dados Treino e Teste
+
+```{r chunk="idx_04_01" , echo=TRUE, eval=TRUE}
+set.seed(1914) #seed relacionado ao ano de fundação do nosso amado e glorioso Palestra Itália
+
+split <- sample.split(df_tinto$qualidade, SplitRatio = 0.8)
+
+#dividindo o dataset para treino e teste
+df_vinho_tinto_treino <- subset(df_tinto, split == TRUE)
+df_vinho_tinto_teste  <- subset(df_tinto, split == FALSE)
+
+
+```
+
+
+### Modelo Vinho Tinto
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+Modelo_01 <- lm(qualidade~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, 
+                data = df_vinho_tinto_treino)
+
+summary(Modelo_01)
+plot(Modelo_01)
+```
+
+### Treino do Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+df_vinho_tinto_treino$Predicao.Qualidade = predict(Modelo_01, newdata = subset(df_vinho_tinto_treino, select=c(qualidade, acidez_fixa,acidez_volatil,acido_citrico,acucar_residual,cloretos,densidade,fsd,grau_alcolico,PH,sulfatos,tsd)))
+
+treino.corr = round(cor(df_vinho_tinto_treino$Predicao.Qualidade, df_vinho_tinto_treino$qualidade), 2)
+treino.RMSE = round(sqrt(mean((df_vinho_tinto_treino$Predicao.Qualidade - df_vinho_tinto_treino$qualidade)^2)))
+treino.MAE = round(mean(abs(df_vinho_tinto_treino$Predicao.Qualidade - df_vinho_tinto_treino$qualidade)))
+
+c(treino.corr ^ 2, treino.RMSE, treino.MAE)
+
+```
+
+### Teste do Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+df_vinho_tinto_teste$Predicao.Qualidade = predict(Modelo_01, newdata = subset(df_vinho_tinto_teste, select=c(qualidade, acidez_fixa,acidez_volatil,acido_citrico,acucar_residual,cloretos,densidade,fsd,grau_alcolico,PH,sulfatos,tsd)))
+
+teste.corr = round(cor(df_vinho_tinto_teste$Predicao.Qualidade, df_vinho_tinto_teste$qualidade), 2)
+teste.RMSE = round(sqrt(mean((df_vinho_tinto_teste$Predicao.Qualidade - df_vinho_tinto_teste$qualidade)^2)))
+teste.MAE = round(mean(abs(df_vinho_tinto_teste$Predicao.Qualidade - df_vinho_tinto_teste$qualidade)))
+
+c(teste.corr ^ 2, teste.RMSE, teste.MAE)
+```
+
+### Relacionamento da Variável "qualidade"
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+par(mfrow=c(1,2))
+plot(df_tinto$qualidade, df_tinto$grau_alcolico, main = "qualidade vs grau_alcolico", xlab="qualidade", ylab = "grau_alcolico", col = 3, pch = 1)
+plot(df_tinto$qualidade, df_tinto$acidez_volatil, main = "qualidade vs acidez_volatil", xlab="qualidade", ylab = "acidez_volatil", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_tinto$qualidade, df_tinto$acido_citrico, main = "qualidade vs acido_citrico", xlab="qualidade", ylab = "acido_citrico", col = 3, pch = 1)
+plot(df_tinto$qualidade, df_tinto$sulfatos, main = "qualidade vs sulfatos", xlab="qualidade", ylab = "sulfatos", col = 3, pch = 1)
+```
+
+### O Modelo de Regressão Linear para Vinho Tinto tem uma precisão prevista de "40%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(100,40), main="Regressão Linear (Vinho Tinto)", labels=c("","Precisão: 40%"))
+
+```
+
+## Vinho Branco
+
+### Separação dos Dados Treino e Teste
+
+```{r chunk="idx_04_01" , echo=TRUE, eval=TRUE}
+set.seed(1914) #seed relacionado ao ano de fundação do nosso amado e glorioso Palestra Itália
+
+split <- sample.split(df_branco$qualidade, SplitRatio = 0.8)
+
+#dividindo o dataset para treino e teste
+df_vinho_branco_treino <- subset(df_branco, split == TRUE)
+df_vinho_branco_teste  <- subset(df_branco, split == FALSE)
+```
+
+### Modelo Vinho Branco
+
+```{r chunk="idx_04_05" , echo=TRUE, eval=TRUE}
+Modelo_01 <- lm(qualidade~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, 
+                data = df_vinho_branco_treino)
+
+summary(Modelo_01)
+plot(Modelo_01)
+```
+
+### Treino do Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+df_vinho_branco_treino$Predicao.Qualidade = predict(Modelo_01, newdata = subset(df_vinho_branco_treino, select=c(qualidade, acidez_fixa, acidez_volatil, acido_citrico, acucar_residual, cloretos, densidade, fsd, grau_alcolico, PH, sulfatos, tsd)))
+
+treino.corr = round(cor(df_vinho_branco_treino$Predicao.Qualidade, df_vinho_branco_treino$qualidade), 2)
+treino.RMSE = round(sqrt(mean((df_vinho_branco_treino$Predicao.Qualidade - df_vinho_branco_treino$qualidade)^2)))
+treino.MAE = round(mean(abs(df_vinho_branco_treino$Predicao.Qualidade - df_vinho_branco_treino$qualidade)))
+
+c(treino.corr ^ 2, treino.RMSE, treino.MAE)
+
+```
+
+### Teste do Modelo
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+
+df_vinho_branco_teste$Predicao.Qualidade = predict(Modelo_01, newdata = subset(df_vinho_branco_teste, select=c(qualidade, acidez_fixa, acidez_volatil, acido_citrico, acucar_residual, cloretos, densidade, fsd, grau_alcolico, PH, sulfatos, tsd)))
+
+teste.corr = round(cor(df_vinho_branco_teste$Predicao.Qualidade, df_vinho_branco_teste$qualidade), 2)
+teste.RMSE = round(sqrt(mean((df_vinho_branco_teste$Predicao.Qualidade - df_vinho_branco_teste$qualidade)^2)))
+teste.MAE = round(mean(abs(df_vinho_branco_teste$Predicao.Qualidade - df_vinho_branco_teste$qualidade)))
+
+c(teste.corr ^ 2, teste.RMSE, teste.MAE)
+```
+
+### Relacionamento da Variável "qualidade"
+
+```{r chunk="idx_04_02" , echo=TRUE, eval=TRUE}
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$grau_alcolico, main = "qualidade vs grau_alcolico", xlab="qualidade", ylab = "grau_alcolico", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$acidez_volatil, main = "qualidade vs acidez_volatil", xlab="qualidade", ylab = "acidez_volatil", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$acido_citrico, main = "qualidade vs acido_citrico", xlab="qualidade", ylab = "acido_citrico", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$sulfatos, main = "qualidade vs sulfatos", xlab="qualidade", ylab = "sulfatos", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$acidez_fixa, main = "qualidade vs acidez_fixa", xlab="qualidade", ylab = "acidez_fixa", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$acucar_residual, main = "qualidade vs acucar_residual", xlab="qualidade", ylab = "acucar_residual", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$cloretos, main = "qualidade vs cloretos", xlab="qualidade", ylab = "cloretos", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$densidade, main = "qualidade vs densidade", xlab="qualidade", ylab = "densidade", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$fsd, main = "qualidade vs fsd", xlab="qualidade", ylab = "fsd", col = 3, pch = 1)
+plot(df_branco$qualidade, df_branco$PH, main = "qualidade vs PH", xlab="qualidade", ylab = "PH", col = 3, pch = 1)
+
+par(mfrow=c(1,2))
+plot(df_branco$qualidade, df_branco$tsd, main = "qualidade vs tsd", xlab="qualidade", ylab = "tsd", col = 3, pch = 1)
+```
+
+### O Modelo de Regressão Linear para Vinho Branco tem uma precisão prevista de "31%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(100,31), main="Regressão Linear (Vinho Branco)", labels=c("","Precisão: 31%"))
+
+```
+
+# Árvore de Regressão
+
+## Técnica
+
+É muito similar a árvore de decisão, pois segue a mesma ideia: um conjunto de nós de DECISÃO/PERGUNTAS partindo de exemplos.
+
+A única diferença é que a resposta é um número ao invés de uma categoria.
+
+A obtenção de árvores de regressão usando o R é feita por meio da função
+rpart, tal como nas árvores de decisão. 
+
+## Vinho Tinto
+```{r chunk="idx_05_01" , echo=TRUE, eval=TRUE}
+RT_Modelo_01 <- rpart(qualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, data = df_vinho_tinto_treino)
+summary(RT_Modelo_01)
+rpart.plot(RT_Modelo_01, digits = 9, fallen.leaves = TRUE, box.palette="RdBu", shadow.col="gray", nn=TRUE)
+
+```
+
+
+
+O Modelo apresentado acima teve um desepenho melhor que Regressão Linear Observamos que a variavel Grau Alcoolico é a variavel que possui o maior peso pois ela está no node mais alto da arvore.
+
+
+### Análise da Qualidade do Modelo (Matriz de Confusão)
+
+```{r chunk="idx_05_02" , echo=TRUE, eval=TRUE}
+
+RT_preditor <- predict(RT_Modelo_01, newdata = df_vinho_tinto_teste)
+RT_Valores_Corte <- as.factor(ifelse(RT_preditor > 6,1,0))
+confusionMatrix(RT_Valores_Corte, df_vinho_tinto_teste$GrupoQualidade)
+
+```
+
+### O Modelo de Árvore de Regressão para Vinho Tinto tem uma precisão prevista de "86%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(86,100), main="Árvore de Regressão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+
+```
+
+## Vinho Branco
+
+```{r chunk="idx_05_03" , echo=TRUE, eval=TRUE}
+RT_Modelo_01 <- rpart(qualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, data = df_vinho_branco_treino)
+summary(RT_Modelo_01)
+rpart.plot(RT_Modelo_01, digits = 9, fallen.leaves = TRUE, box.palette="RdBu", shadow.col="gray", nn=TRUE)
+
+```
+
+Nota se que para determinar a qualidade do vinho branco utiliza-se menos variáveis que para vinho tinto
+
+
+```{r chunk="idx_05_04" , echo=TRUE, eval=TRUE}
+
+RT_preditor <- predict(RT_Modelo_01, newdata = df_vinho_branco_teste)
+RT_Valores_Corte <- as.factor(ifelse(RT_preditor > 6,1,0))
+confusionMatrix(RT_Valores_Corte, df_vinho_branco_teste$GrupoQualidade)
+
+```
+
+### O Modelo de Árvore de Regressão para Vinho Branco tem uma precisão prevista de "78%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(78,100), main="Árvore de Regressão (Vinho Branco)", labels=c("","Precisão: 78%"))
+
+```
+
+# Árvore de Decisão
+
+## Técnica
+
+É muito utilizada para aprendizagem indutiva e é extremamente prática.
+
+O conhecimento da Árvore de Decisão será baseado em uma estrutura de árvore para assim podermos realizar decisão. Porém, caso não queira representar em estruturá de árvores, pode ser facilmente representada por regras "se/então". Pode-se utilizar tanto em problemas supervisionados quanto não supervisionados.
+
+A árvore decisão também consegue descobrir quais são os atributos de maior importância para predição formando uma estrutura de nós. 
+
+A base é a mesma da árvore de regressão.
+
+Classe de algoritmos de aprendizado baseado na árvore de decisão: ID3("top-down"), C4.5 etc.
+
+É importante ressaltar que uanto menor a árvore, melhor será a indução. Isso basicamente quer dizer que: caso fique grande, pode cair num problema de overfitting ("100% de acerto").
+
+Outra coisa que precisa-se lembrar em uma Árvore de Decisão é a entropia, a qual diz o quanto um conjunto de dados aleatório está "impuro".
+E sempre varia entre 0 e 1, de acordo com a proporção de +/- no conjunto. Vale lembrar que a entropia é importante para o cálculo de ganho de informação para a árvore.
+
+A entropia (binária) é dada pela seguinte fórmula:
+
+$$Entropia(S) = -\sum p_{+} log_{2}  p_{+} - p_{-} log_{2} p_{-}$$
+
+onde:
+
+S: coleção S contendo exemplos
+p(+): proporção de exemplos positivos em S;
+p(-): proporção de exemplos negativos em S
+
+Referencia:
+http://web.tecnico.ulisboa.pt/ana.freitas/bioinformatics.ath.cx/bioinformatics.ath.cx/indexf23d.html?id=199
+
+## Vinho Tinto
+
+```{r chunk="idx_06_01" , echo=TRUE, eval=TRUE}
+
+DT_Modelo01 <-rpart(GrupoQualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, data = df_vinho_tinto_treino)
+
+summary(DT_Modelo01)
+rpart.plot(DT_Modelo01, digits = 19, fallen.leaves = TRUE)
+
+```
+
+### Análise da Qualidade do Modelo
+
+```{r chunk="idx_06_02" , echo=TRUE, eval=TRUE}
+DT_Preditor <- as.data.frame(predict(DT_Modelo01, newdata = df_vinho_tinto_teste))
+DT_Preditor$factor <- as.factor(ifelse(DT_Preditor[["1"]] > DT_Preditor[["0"]],1,0))
+confusionMatrix(DT_Preditor$factor, df_vinho_tinto_teste$GrupoQualidade)
+```
+
+Até agora notamos que este foi o modelo que mais acertou com `86%` de acurácia, justamente por que a técnica é capaz de prever com maior exatidao quais as variaveis mais importantes para determinar a qualidade.
+
+### O Modelo de Árvore de Decisão para Vinho Tinto tem uma precisão prevista de "86%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(86,100), main="Árvore de Decisão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+
+```
+
+## Vinho Branco
+
+```{r chunk="idx_06_03" , echo=TRUE, eval=TRUE}
+
+DT_Modelo01 <-rpart(GrupoQualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, data = df_base_branco)
+
+summary(DT_Modelo01)
+rpart.plot(DT_Modelo01, digits = 19, fallen.leaves = TRUE)
+
+```
+
+```{r chunk="idx_06_04" , echo=TRUE, eval=TRUE}
+DT_Preditor <- as.data.frame(predict(DT_Modelo01, newdata = df_vinho_branco_teste))
+DT_Preditor$factor <- as.factor(ifelse(DT_Preditor[["1"]] > DT_Preditor[["0"]],1,0))
+confusionMatrix(DT_Preditor$factor, df_vinho_branco_teste$GrupoQualidade)
+```
+
+### O Modelo de Árvore de Decisão para Vinho Branco tem uma precisão prevista de "78%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(78,100), main="Árvore de Decisão (Vinho Branco)", labels=c("","Precisão: 78%"))
+
+```
+
+# Regressão Logística
+
+## Técnica
+
+A regressão logística é um modelo no qual classificamos na qual a variável dependente possuem valores binários (intervalos entre 0 e 1), ou seja, um ou o outro e as independentes podem ser categóricas ou não.
+
+Este tipo de modelo lida muito bem com variáveis de entrada (independentes) de tipo categórica e possui um grau relativamente alto de confiabilidade.
+
+Podemos dizer de modo geral que funciona como uma regressão linear, com exceção de que as variáveis dependentes devem ser categóricas e utiliza o método de máxima verossimilhança, ao invés dos mínimos quadrados como na regressão linear.
+
+Como vimos, nosso dataset possui apenas dados numéricos, com exceção do tipo de vinho.
+
+### Criando modelo Árvore de Regressão Logística da variável de saída "qualidade" com todas as variáveis de entrada
+
+
+## Vinho Tinto
+
+### Modelo Vinho Tinto
+
+```{r chunk="idx_07_01" , echo=TRUE, eval=TRUE}
+
+RL_Modelo01 <- glm(qualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, data = df_vinho_tinto_treino)
+summary(RL_Modelo01)
+```
+
+```{r chunk="idx_07_02" , echo=TRUE, eval=TRUE}
+
+RL_Preditor <- predict.glm(RL_Modelo01, newdata = df_vinho_tinto_teste, type = 'response')
+RL_Preditor_Corte <- as.factor(ifelse(RL_Preditor > 6,1,0))
+confusionMatrix(RL_Preditor_Corte, df_vinho_tinto_teste$GrupoQualidade)
+
+```
+
+### O Modelo de Regressão Logística para Vinho Tinto tem uma precisão prevista de "86%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(86,100), main="Regressão Logística (Vinho Tinto)", labels=c("","Precisão: 86%"))
+
+```
+
+## Vinho Branco
+
+### Modelo Vinho Branco
+
+```{r chunk="idx_07_03" , echo=TRUE, eval=TRUE}
+
+RL_Modelo01 <- glm(qualidade ~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, data = df_vinho_branco_treino)
+summary(RL_Modelo01)
+```
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+RL_Preditor <- predict.glm(RL_Modelo01, newdata = df_vinho_branco_teste, type = 'response')
+RL_Preditor_Corte <- as.factor(ifelse(RL_Preditor > 6,1,0))
+confusionMatrix(RL_Preditor_Corte, df_vinho_branco_teste$GrupoQualidade)
+
+```
+
+### O Modelo de Regressão Logística para Vinho Branco tem uma precisão prevista de "78%"
+
+```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
+
+pie(c(78,100), main="Regressão Logística (Vinho Branco)", labels=c("","Precisão: 78%"))
+
+```
+
+# PCA
+
+## Técnica
+
+ Este algoritmo provê redução de dimensionalidade. Algumas vezes você tem uma grande quantidade de características, provavelmente muito correlacionadas entre si, e os modelos podem facilmente serem sobreajustados em um grande conjunto de dados. Neste cenário, aplica-se PCA.
+ PCA calcula a projeção dos dados em algum vetor que maximize a variança dos dados e perca a menor quantidade de informação possível. Surpreendentemente, estes vetores são os autovetores da matriz de correlação das características de um conjunto de dados.
+
+## Vinho Tinto
+
+```{r chunk="idx_08_01" , echo=TRUE, eval=TRUE}
+
+TintoPCA = prcomp(df_base_tinto[1:12] , scale. = TRUE)
+
+summary(TintoPCA)
+
+plot(1:12, TintoPCA$sdev^2, type = "b", xlab = "Componente",
+     ylab = "Variância", main = "Vinhos tintos", sub = "Dados não normalizados previamente", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+
+```
+
+## Vinho Tinto base normalizada
+
+```{r chunk="idx_08_02" , echo=TRUE, eval=TRUE}
+
+TintoPCA = prcomp(df_tinto[1:12] , scale. = TRUE)
+
+summary(TintoPCA)
+
+plot(1:12, TintoPCA$sdev^2, type = "b", xlab = "Componente",
+     ylab = "Variância", main = "Vinhos tintos", sub = "Dados normalizados previamente(Box Cox)", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+
+
+
+```
+
+
+
+## Vinho Branco
+
+```{r chunk="idx_08_03" , echo=TRUE, eval=TRUE}
+
+BrancoPCA = prcomp(df_base_branco[1:12], scale. = TRUE)
+
+summary(BrancoPCA)
+
+plot(1:12, BrancoPCA$sdev^2, type = "b", xlab = "Componente",
+     ylab = "Variância", main = "Vinhos brancos", sub = "Dados não normalizados previamente", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+
+```
+
+
+## Vinho Branco base normalizada
+
+```{r chunk="idx_08_04" , echo=TRUE, eval=TRUE}
+
+BrancoPCA = prcomp(df_branco[1:12], scale. = TRUE)
+
+summary(BrancoPCA)
+
+plot(1:12, BrancoPCA$sdev^2, type = "b", xlab = "Componente",
+     ylab = "Variância", main = "Vinhos brancos", sub = "Dados normalizados previamente(Box Cox)", pch = 20, cex.axis = 0.8, cex.lab = 0.8)
+
+```
+
+## Conclusão sobre PCA base normaliza vs base bruta
+
+Esses 4 gráficos anteriores foram plotados para gerar a discussão sobre utilizar PCA com dados normalizados previamente ou não, para uma comparação de qual estratégia maximiza mais a variança dos dados.
+
+O próprio algoritmo PCA trabalha na a variancia dos dados, mas usando os dados previamente tratados em relação a variancia com a função Box Cox, vemos que os gráficos dos dados previamente tratado são mais uniformes e é menor a discrepância de valors em certas componentes.
+
+
+# K-Means
+
+## Técnica
+
+K-means é um algoritmo de aprendizagem não supervisionada que agrupa dados com base em sua similaridade. Aprendizagem não supervisionada significa que não há resultado a ser previsto, e o algoritmo apenas tenta encontrar padrões nos dados. No k-means, temos que especificar o número de grupos em que desejamos que os dados sejam agrupados. O algoritmo atribui aleatoriamente cada observação para um cluster, e encontra o centróide de cada cluster. Em seguida, o algoritmo segue em dois passos:
+
+• Redistribui pontos de dados para o cluster cujo centróide é mais próximo.
+
+• Calcula novo centróide para cada cluster.
+
+Estes dois passos são repetidos até que a variação dentro do conjunto não possa mais ser reduzida. A variação dentro do cluster é calculada como a soma da distância euclidiana entre os pontos de dados e os os respectivos centróides de clusters.
+
+## Vinho Tinto
+
+```{r chunk="idx_09_01" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_tinto[9:10], 5);
+Resultado$size 
+
+plot(df_tinto[9:10], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[9:10], col="RED", pch=7, cex=4)
+
+```
+
+
+
+```{r chunk="idx_09_02" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_tinto[11:10], 5);
+Resultado$size 
+
+plot(df_tinto[11:10], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[11:10], col="RED", pch=7, cex=4)
+
+```
+
+
+```{r chunk="idx_09_03" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_tinto[11:9], 5)
+Resultado$size 
+
+plot(df_tinto[11:9], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[11:9], col="RED", pch=7, cex=4)
+
+
+```
+### Algumas relações que conseguimos inferir com algortimo K-means para as variáveis alcoólico, sulfatos e pH na base vinho tinto
+
+Baixo teor alcoólico, baixos sulfatos
+baixos sulfatos, álcool elevado
+baixo pH, baixo teor alcoólico
+pH elevado, álcool alto
+pH elevado, baixos sulfatos
+baixo pH, altos sulfatos
+
+
+## Vinho Branco
+
+
+```{r chunk="idx_09_04" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_branco[9:10], 5);
+Resultado$size 
+
+plot(df_branco[9:10], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[9:10], col="RED", pch=7, cex=4)
+
+```
+
+
+```{r chunk="idx_09_05" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_branco[11:10], 5);
+Resultado$size 
+
+plot(df_branco[11:10], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[11:10], col="RED", pch=7, cex=4)
+
+```
+
+
+```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
+
+Resultado <- kmeans(df_branco[11:9], 5)
+Resultado$size 
+
+plot(df_branco[11:9], col = Resultado$cluster, pch= 19)
+points(Resultado$centers[11:9], col="RED", pch=7, cex=4)
+
+```
+
+### Algumas relações que conseguimos inferir com algortimo K-means para as variáveis alcoólico, sulfatos e pH na base vinho branco
+
+Para vinh branco é possível visualizar que para pH muito não temos tanto sulfatos altos como na base vinho tintos e que há maior número de dados na faixa intermediária (-1 à 1, em ambos eixos), em relação a base vinho tintos
+
+
+Na relação grau alcoólico e sulfatos, vemos que na base de vinhos brancos os dados são mais bem distribuídos, onde é notório que para grau alcoólico mais elevado temos tanto sultados baixo como altos.
+
+Na comparação, das 3 variáveis juntas, é possível verificar que há maior quantidade de dados na faixa de pH baixo e grau alcoólico alto na base vinhos brancos do que vinhos tintos.
+
+
+
+# Cluster Hierarquico
+
+Separar um conjunto de objetos em grupos (clusters) de forma que os membros de qualquer grupo formado sejam os mais homogêneos possíveis com relação a algum critério (uso de medidas de distância)
+
+Hierárquicos: identificam agrupamentos e o provável o n° g de grupos/clusters
+
+#Separando base Vinho 
+
+```{r chunk="idx_10_01" , echo=TRUE, eval=TRUE}
+
+
+Resultado2 <- df_vinho_branco_teste [12:10]
+Resultado2
+
+Resultado3 <- df_vinho_tinto_teste [12:10]
+Resultado3
+
+```
+
+#Distancia Euclidiana
+
+Métodos hierárquicos usam uma matriz de distância como uma entrada para o algoritmo de clustering. A escolha de uma métrica apropriada influenciará a forma dos aglomerados, pois alguns elementos podem estar próximos uns dos outros de acordo com uma distância e distantes de acordo com a outra.
+
+
+```{r chunk="idx_10_02" , echo=TRUE, eval=TRUE}
+
+d <-dist(Resultado2, method = "euclidean")
+d
+
+d2 <-dist(Resultado3, method = "euclidean")
+d2
+```
+#Dendrogram
+O dendrograma é um diagrama de árvore que exibe os grupos formados por agrupamento de observações em cada passo e em seus níveis de similaridade. O nível de similaridade é medido ao longo do eixo vertical (alternativamente, você pode exibir o nível de distância) e as diferentes observações são listadas ao longo do eixo horizontal.
+
+Usamos a distância euclidiana como uma entrada para o algoritmo de agrupamento (o critério de variação mínima de Ward minimiza a variação total dentro do cluster)
+
+```{r chunk="idx_10_03" , echo=TRUE, eval=TRUE}
+
+fit <-hclust(d, method = "ward.D")
+plot(fit, hang = -1)
+groups <- cutree(fit, k=3)
+rect.hclust(fit, k=3, border="red")
+
+fit2 <-hclust(d2, method = "ward.D")
+plot(fit2, hang = -1)
+groups2 <- cutree(fit2, k=3)
+rect.hclust(fit2, k=3, border="red")
+
+````
+
+#Resultado com Matrix de Confusao
+
+O desempenho do cluster pode ser avaliado com o auxilio da matrix de confusão.
+
+
+```{r chunk="idx_10_04" , echo=TRUE, eval=TRUE}
+
+table(Resultado2[,1],groups)
+
+table(Resultado3[,1],groups2)
+````
+
+#Analise
+Esse Dendrograma foi criado usando uma partição de 3 agrupamentos para cada tipo de vinho, baseado em nivel de similaridade.
+
+
+# Conclusão
+
+## Precisão Prevista (Vinho Tinto)
+
+```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
+
+par(mfrow=c(2,2))
+pie(c(100,40), main="Regressão Linear (Vinho Tinto)", labels=c("","Precisão: 40%"))
+pie(c(86,100), main="Árvore de Regressão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+pie(c(86,100), main="Árvore de Decisão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+pie(c(86,100), main="Regressão Logística (Vinho Tinto)", labels=c("","Precisão: 86%"))
+
+```
+
+## Precisão Prevista (Vinho Branco)
+
+```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
+
+par(mfrow=c(2,2))
+pie(c(100,31), main="Regressão Linear (Vinho Branco)", labels=c("","Precisão: 31%"))
+pie(c(78,100), main="Árvore de Regressão (Vinho Branco)", labels=c("","Precisão: 78%"))
+pie(c(78,100), main="Árvore de Decisão (Vinho Branco)", labels=c("","Precisão: 78%"))
+pie(c(78,100), main="Regressão Logística (Vinho Branco)", labels=c("","Precisão: 78%"))
+```
