@@ -1161,9 +1161,7 @@ Resultado3 <- df_vinho_tinto_teste [12:10]
 
 ```
 
-## Vinho Tinto
-
-### Distância Euclidiana
+## Distância Euclidiana
 
 Métodos hierárquicos usam uma matriz de distância como uma entrada para o algoritmo de clustering. A escolha de uma métrica apropriada influenciará a forma dos aglomerados, pois alguns elementos podem estar próximos uns dos outros de acordo com uma distância e distantes de acordo com a outra.
 
@@ -1177,7 +1175,7 @@ d2 <-dist(Resultado3, method = "euclidean")
 d2
 ```
 
-### Dendrograma
+## Dendrograma
 O dendrograma é um diagrama de árvore que exibe os grupos formados por agrupamento de observações em cada passo e em seus níveis de similaridade. O nível de similaridade é medido ao longo do eixo vertical (alternativamente, você pode exibir o nível de distância) e as diferentes observações são listadas ao longo do eixo horizontal.
 
 Usamos a distância euclidiana como uma entrada para o algoritmo de agrupamento (o critério de variação mínima de Ward minimiza a variação total dentro do cluster)
@@ -1196,7 +1194,7 @@ rect.hclust(fit2, k=3, border="red")
 
 ```
 
-### Resultado com Matrix de Confusão
+## Resultado com Matriz de Confusão
 
 O desempenho do cluster pode ser avaliado com o auxilio da matrix de confusão.
 
@@ -1208,12 +1206,8 @@ table(Resultado2[,1],groups)
 table(Resultado3[,1],groups2)
 ```
 
-### Análise Vinho Tinto
+## Análise
 Esse Dendrograma foi criado usando uma partição de 3 agrupamentos para cada tipo de vinho, baseado em nivel de similaridade.
-
-
-## Vinho Branco
-
 
 
 # Conclusão
