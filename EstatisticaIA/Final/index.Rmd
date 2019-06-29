@@ -611,6 +611,8 @@ df_vinho_tinto_teste  <- subset(df_tinto, split == FALSE)
 Modelo_01 <- lm(qualidade~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, 
                 data = df_vinho_tinto_treino)
 
+precisao.tinto.rlinear = summary(Modelo_01)$r.squared * 100
+
 summary(Modelo_01)
 plot(Modelo_01)
 ```
@@ -655,14 +657,6 @@ plot(df_tinto$qualidade, df_tinto$acido_citrico, main = "qualidade vs acido_citr
 plot(df_tinto$qualidade, df_tinto$sulfatos, main = "qualidade vs sulfatos", xlab="qualidade", ylab = "sulfatos", col = 3, pch = 1)
 ```
 
-### O Modelo de Regressão Linear para Vinho Tinto tem uma precisão prevista de "40%"
-
-```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
-
-pie(c(100,40), main="Regressão Linear (Vinho Tinto)", labels=c("","Precisão: 40%"))
-
-```
-
 ## Vinho Branco
 
 ### Separação dos Dados Treino e Teste
@@ -682,6 +676,8 @@ df_vinho_branco_teste  <- subset(df_branco, split == FALSE)
 ```{r chunk="idx_04_05" , echo=TRUE, eval=TRUE}
 Modelo_01 <- lm(qualidade~ acidez_fixa+acidez_volatil+acido_citrico+acucar_residual+cloretos+densidade+fsd+grau_alcolico+PH+sulfatos+tsd, 
                 data = df_vinho_branco_treino)
+
+precisao.branco.rlinear = summary(Modelo_01)$r.squared * 100
 
 summary(Modelo_01)
 plot(Modelo_01)
@@ -741,14 +737,6 @@ par(mfrow=c(1,2))
 plot(df_branco$qualidade, df_branco$tsd, main = "qualidade vs tsd", xlab="qualidade", ylab = "tsd", col = 3, pch = 1)
 ```
 
-### O Modelo de Regressão Linear para Vinho Branco tem uma precisão prevista de "31%"
-
-```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
-
-pie(c(100,31), main="Regressão Linear (Vinho Branco)", labels=c("","Precisão: 31%"))
-
-```
-
 # Árvore de Regressão
 
 ## Técnica
@@ -781,15 +769,12 @@ RT_preditor <- predict(RT_Modelo_01, newdata = df_vinho_tinto_teste)
 RT_Valores_Corte <- as.factor(ifelse(RT_preditor > 6,1,0))
 confusionMatrix(RT_Valores_Corte, df_vinho_tinto_teste$GrupoQualidade)
 
-```
+precisao.tinto.aregressao=confusionMatrix(RT_Valores_Corte,
+                                         df_vinho_tinto_teste$GrupoQualidade)$overall["Accuracy"] * 100
 
-### O Modelo de Árvore de Regressão para Vinho Tinto tem uma precisão prevista de "86%"
-
-```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
-
-pie(c(86,100), main="Árvore de Regressão (Vinho Tinto)", labels=c("","Precisão: 86%"))
 
 ```
+
 
 ## Vinho Branco
 
@@ -809,13 +794,8 @@ RT_preditor <- predict(RT_Modelo_01, newdata = df_vinho_branco_teste)
 RT_Valores_Corte <- as.factor(ifelse(RT_preditor > 6,1,0))
 confusionMatrix(RT_Valores_Corte, df_vinho_branco_teste$GrupoQualidade)
 
-```
-
-### O Modelo de Árvore de Regressão para Vinho Branco tem uma precisão prevista de "78%"
-
-```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
-
-pie(c(78,100), main="Árvore de Regressão (Vinho Branco)", labels=c("","Precisão: 78%"))
+precisao.branco.aregressao=confusionMatrix(RT_Valores_Corte,
+                                           df_vinho_branco_teste$GrupoQualidade)$overall["Accuracy"] * 100
 
 ```
 
@@ -868,15 +848,9 @@ rpart.plot(DT_Modelo01, digits = 19, fallen.leaves = TRUE)
 DT_Preditor <- as.data.frame(predict(DT_Modelo01, newdata = df_vinho_tinto_teste))
 DT_Preditor$factor <- as.factor(ifelse(DT_Preditor[["1"]] > DT_Preditor[["0"]],1,0))
 confusionMatrix(DT_Preditor$factor, df_vinho_tinto_teste$GrupoQualidade)
-```
 
-Até agora notamos que este foi o modelo que mais acertou com `86%` de acurácia, justamente por que a técnica é capaz de prever com maior exatidao quais as variaveis mais importantes para determinar a qualidade.
-
-### O Modelo de Árvore de Decisão para Vinho Tinto tem uma precisão prevista de "86%"
-
-```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
-
-pie(c(86,100), main="Árvore de Decisão (Vinho Tinto)", labels=c("","Precisão: 86%"))
+precisao.tinto.adecisao=confusionMatrix(DT_Preditor$factor,
+                                        df_vinho_tinto_teste$GrupoQualidade)$overall["Accuracy"] * 100
 
 ```
 
@@ -895,13 +869,9 @@ rpart.plot(DT_Modelo01, digits = 19, fallen.leaves = TRUE)
 DT_Preditor <- as.data.frame(predict(DT_Modelo01, newdata = df_vinho_branco_teste))
 DT_Preditor$factor <- as.factor(ifelse(DT_Preditor[["1"]] > DT_Preditor[["0"]],1,0))
 confusionMatrix(DT_Preditor$factor, df_vinho_branco_teste$GrupoQualidade)
-```
 
-### O Modelo de Árvore de Decisão para Vinho Branco tem uma precisão prevista de "78%"
-
-```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
-
-pie(c(78,100), main="Árvore de Decisão (Vinho Branco)", labels=c("","Precisão: 78%"))
+precisao.branco.adecisao=confusionMatrix(DT_Preditor$factor,
+                                         df_vinho_branco_teste$GrupoQualidade)$overall["Accuracy"] * 100
 
 ```
 
@@ -936,13 +906,8 @@ RL_Preditor <- predict.glm(RL_Modelo01, newdata = df_vinho_tinto_teste, type = '
 RL_Preditor_Corte <- as.factor(ifelse(RL_Preditor > 6,1,0))
 confusionMatrix(RL_Preditor_Corte, df_vinho_tinto_teste$GrupoQualidade)
 
-```
-
-### O Modelo de Regressão Logística para Vinho Tinto tem uma precisão prevista de "86%"
-
-```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
-
-pie(c(86,100), main="Regressão Logística (Vinho Tinto)", labels=c("","Precisão: 86%"))
+precisao.tinto.rlogistica=confusionMatrix(RL_Preditor_Corte,
+                                          df_vinho_tinto_teste$GrupoQualidade)$overall["Accuracy"] * 100
 
 ```
 
@@ -962,13 +927,8 @@ RL_Preditor <- predict.glm(RL_Modelo01, newdata = df_vinho_branco_teste, type = 
 RL_Preditor_Corte <- as.factor(ifelse(RL_Preditor > 6,1,0))
 confusionMatrix(RL_Preditor_Corte, df_vinho_branco_teste$GrupoQualidade)
 
-```
-
-### O Modelo de Regressão Logística para Vinho Branco tem uma precisão prevista de "78%"
-
-```{r chunk="idx_07_04" , echo=TRUE, eval=TRUE}
-
-pie(c(78,100), main="Regressão Logística (Vinho Branco)", labels=c("","Precisão: 78%"))
+precisao.branco.rlogistica=confusionMatrix(RL_Preditor_Corte,
+                                           df_vinho_branco_teste$GrupoQualidade)$overall["Accuracy"] * 100
 
 ```
 
@@ -1060,6 +1020,7 @@ Estes dois passos são repetidos até que a variação dentro do conjunto não p
 ```{r chunk="idx_09_01" , echo=TRUE, eval=TRUE}
 
 Resultado <- kmeans(df_tinto[9:10], 5);
+precisao.tinto.kmeans = Resultado$betweenss / Resultado$totss * 100
 Resultado$size 
 
 plot(df_tinto[9:10], col = Resultado$cluster, pch= 19)
@@ -1102,11 +1063,11 @@ baixo pH, altos sulfatos
 
 ## Vinho Branco
 
-
 ```{r chunk="idx_09_04" , echo=TRUE, eval=TRUE}
 
 Resultado <- kmeans(df_branco[9:10], 5);
-Resultado$size 
+precisao.branco.kmeans = Resultado$betweenss / Resultado$totss * 100
+Resultado$size
 
 plot(df_branco[9:10], col = Resultado$cluster, pch= 19)
 points(Resultado$centers[9:10], col="RED", pch=7, cex=4)
@@ -1254,25 +1215,66 @@ Esse Dendrograma foi criado usando uma partição de 3 agrupamentos para cada ti
 
 # Conclusão
 
-## Precisão Prevista (Vinho Tinto)
+## Precisão Prevista
+
+### Vinho Tinto
 
 ```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
 
-par(mfrow=c(2,2))
-pie(c(100,40), main="Regressão Linear (Vinho Tinto)", labels=c("","Precisão: 40%"))
-pie(c(86,100), main="Árvore de Regressão (Vinho Tinto)", labels=c("","Precisão: 86%"))
-pie(c(86,100), main="Árvore de Decisão (Vinho Tinto)", labels=c("","Precisão: 86%"))
-pie(c(86,100), main="Regressão Logística (Vinho Tinto)", labels=c("","Precisão: 86%"))
+precisao.tinto.pca = 10.10
+precisao.tinto.chierarquico = 10.10
+
+precisao.tinto = data.frame("Tecnica" = c("Regressao Linear",
+                                     "Arvore de Regressao",
+                                     "Arvore de Decisao",
+                                     "Regressao Logistica",
+                                     "PCA",
+                                     "K-Means",
+                                     "Cluster Hierarquico"),
+                       "Acuracia" = c(as.numeric(precisao.tinto.rlinear),
+                                      as.numeric(precisao.tinto.aregressao),
+                                      as.numeric(precisao.tinto.adecisao),
+                                      as.numeric(precisao.tinto.rlogistica),
+                                      as.numeric(precisao.tinto.pca),
+                                      as.numeric(precisao.tinto.kmeans),
+                                      as.numeric(precisao.tinto.chierarquico)), 
+                       stringsAsFactors = FALSE)
+
+ggplot(precisao.tinto, aes(x=Tecnica, y=Acuracia, fill=Tecnica)) +
+  geom_bar(stat="identity") +
+  scale_fill_hue(c = 40)
 
 ```
 
-## Precisão Prevista (Vinho Branco)
+### Vinho Branco
 
 ```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
 
-par(mfrow=c(2,2))
-pie(c(100,31), main="Regressão Linear (Vinho Branco)", labels=c("","Precisão: 31%"))
-pie(c(78,100), main="Árvore de Regressão (Vinho Branco)", labels=c("","Precisão: 78%"))
-pie(c(78,100), main="Árvore de Decisão (Vinho Branco)", labels=c("","Precisão: 78%"))
-pie(c(78,100), main="Regressão Logística (Vinho Branco)", labels=c("","Precisão: 78%"))
+precisao.branco.pca = 10.10
+precisao.branco.chierarquico = 10.10
+
+precisao.branco = data.frame("Tecnica" = c("Regressao Linear",
+                                     "Arvore de Regressao",
+                                     "Arvore de Decisao",
+                                     "Regressao Logistica",
+                                     "PCA",
+                                     "K-Means",
+                                     "Cluster Hierarquico"),
+                       "Acuracia" = c(as.numeric(precisao.branco.rlinear),
+                                      as.numeric(precisao.branco.aregressao),
+                                      as.numeric(precisao.branco.adecisao),
+                                      as.numeric(precisao.branco.rlogistica),
+                                      as.numeric(precisao.branco.pca),
+                                      as.numeric(precisao.branco.kmeans),
+                                      as.numeric(precisao.branco.chierarquico)), 
+                       stringsAsFactors = FALSE)
+
+ggplot(precisao.branco, aes(x=Tecnica, y=Acuracia, fill=Tecnica)) +
+  geom_bar(stat="identity") +
+  scale_fill_hue(c = 40)
+
 ```
+
+
+## Análise Final
+
