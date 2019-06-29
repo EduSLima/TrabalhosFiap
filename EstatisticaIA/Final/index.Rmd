@@ -28,7 +28,7 @@ opts_chunk$set(echo = FALSE,
 opts_knit$set(width = 75)
 ```
 
-# Inicio
+# Início
 
 ## Introdução
 
@@ -236,7 +236,7 @@ Entretanto a Qualidade não varia, ou seja em nossa perceção as característic
 
 # Preparação dos Dados
 
-## Inicio
+## Técnica
 
 ### Transformação de qualidade em variável categórica
 
@@ -528,7 +528,9 @@ subplot(p_2,  nrows = 4)
 ```
 
 
-# Matriz de Correlação 
+# Matriz de Correlação
+
+## Técnica
 
   O primeiro passo para iniciar o processo de aplicação de modelos estatísticos é validar as correlações que possam indicar caracteristicas que determinam o fato.E neste caso precisamos saber quais das variáveis podem agregar qualidade ao vinho.
   
@@ -1145,47 +1147,86 @@ Na comparação, das 3 variáveis juntas, é possível verificar que há maior q
 
 # Cluster Hierárquico
 
+## Técnica
+
 Separar um conjunto de objetos em grupos (clusters) de forma que os membros de qualquer grupo formado sejam os mais homogêneos possíveis com relação a algum critério (uso de medidas de distância)
 
 Hierárquicos: identificam agrupamentos e o provável o n° g de grupos/clusters
 
-## Separando Base Vinho
+### Separando Base Vinho
 
 ```{r chunk="idx_10_01" , echo=TRUE, eval=TRUE}
 
-Resultado2 <- df_vinho_branco_teste [12:10]
-#Resultado2
+Resultado1 <- df_vinho_tinto_teste [12:10]
 
-Resultado3 <- df_vinho_tinto_teste [12:10]
-#Resultado3
+Resultado2 <- df_vinho_branco_teste [12:10]
 
 ```
 
-## Distância Euclidiana
+
+## Vinho Tinto
+
+### Distância Euclidiana
 
 Métodos hierárquicos usam uma matriz de distância como uma entrada para o algoritmo de clustering. A escolha de uma métrica apropriada influenciará a forma dos aglomerados, pois alguns elementos podem estar próximos uns dos outros de acordo com uma distância e distantes de acordo com a outra.
 
 
 ```{r chunk="idx_10_02" , echo=TRUE, eval=TRUE}
 
-d <-dist(Resultado2, method = "euclidean")
-d
+d1 <-dist(Resultado1, method = "euclidean")
+d1
 
-d2 <-dist(Resultado3, method = "euclidean")
-d2
 ```
 
-## Dendrograma
+### Dendrograma
+
 O dendrograma é um diagrama de árvore que exibe os grupos formados por agrupamento de observações em cada passo e em seus níveis de similaridade. O nível de similaridade é medido ao longo do eixo vertical (alternativamente, você pode exibir o nível de distância) e as diferentes observações são listadas ao longo do eixo horizontal.
 
 Usamos a distância euclidiana como uma entrada para o algoritmo de agrupamento (o critério de variação mínima de Ward minimiza a variação total dentro do cluster)
 
 ```{r chunk="idx_10_03" , echo=TRUE, eval=TRUE}
 
-fit <-hclust(d, method = "ward.D")
-plot(fit, hang = -1)
-groups <- cutree(fit, k=3)
-rect.hclust(fit, k=3, border="red")
+fit1 <-hclust(d1, method = "ward.D")
+plot(fit1, hang = -1)
+groups1 <- cutree(fit1, k=3)
+rect.hclust(fit1, k=3, border="red")
+
+```
+
+### Resultado com Matriz de Confusão
+
+O desempenho do cluster pode ser avaliado com o auxilio da matrix de confusão.
+
+
+```{r chunk="idx_10_04" , echo=TRUE, eval=TRUE}
+
+table(Resultado1[,1],groups1)
+
+```
+
+Esse Dendrograma foi criado usando uma partição de 3 agrupamentos para cada tipo de vinho, baseado em nivel de similaridade.
+
+## Vinho Branco
+
+### Distância Euclidiana
+
+Métodos hierárquicos usam uma matriz de distância como uma entrada para o algoritmo de clustering. A escolha de uma métrica apropriada influenciará a forma dos aglomerados, pois alguns elementos podem estar próximos uns dos outros de acordo com uma distância e distantes de acordo com a outra.
+
+
+```{r chunk="idx_10_02" , echo=TRUE, eval=TRUE}
+
+d2 <-dist(Resultado2, method = "euclidean")
+d2
+
+```
+
+### Dendrograma
+
+O dendrograma é um diagrama de árvore que exibe os grupos formados por agrupamento de observações em cada passo e em seus níveis de similaridade. O nível de similaridade é medido ao longo do eixo vertical (alternativamente, você pode exibir o nível de distância) e as diferentes observações são listadas ao longo do eixo horizontal.
+
+Usamos a distância euclidiana como uma entrada para o algoritmo de agrupamento (o critério de variação mínima de Ward minimiza a variação total dentro do cluster)
+
+```{r chunk="idx_10_03" , echo=TRUE, eval=TRUE}
 
 fit2 <-hclust(d2, method = "ward.D")
 plot(fit2, hang = -1)
@@ -1194,20 +1235,21 @@ rect.hclust(fit2, k=3, border="red")
 
 ```
 
-## Resultado com Matriz de Confusão
+### Resultado com Matriz de Confusão
 
 O desempenho do cluster pode ser avaliado com o auxilio da matrix de confusão.
 
 
 ```{r chunk="idx_10_04" , echo=TRUE, eval=TRUE}
 
-table(Resultado2[,1],groups)
+table(Resultado2[,1],groups2)
 
-table(Resultado3[,1],groups2)
 ```
 
-## Análise
 Esse Dendrograma foi criado usando uma partição de 3 agrupamentos para cada tipo de vinho, baseado em nivel de similaridade.
+
+
+
 
 
 # Conclusão
