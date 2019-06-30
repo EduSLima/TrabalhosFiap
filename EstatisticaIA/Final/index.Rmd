@@ -1268,7 +1268,7 @@ Segue abaixo o resultado final do Grupo E2GR referente a Análise de Qualidade d
 
 * Os vinhos devem ser analisados separadamente porque seus preditores divergem.
 
-* Efetuamos uma higienização do dataset por causa das duplicidades
+* Efetuamos uma higienização do dataset por causa das duplicidades.
 
 * Efetuamos a normalização dos dados utilizando a Técnica Box Cox para alcançar os objetivos.
 
@@ -1276,4 +1276,6 @@ Segue abaixo o resultado final do Grupo E2GR referente a Análise de Qualidade d
 
 * Motivado por conta do grupo classificador de determinância de qualidade se é bom, médio ou ruim.
 
-* ??? ...Importação... ???
+* Entendemos que os melhores Vinhos Tinto para Importar são aqueles que possuem o grau_alcolico < 0.54 e sulfatos < 0.15 ou grau_alcolico >= 0.55 e grau_alcolico < 0.99 e sulfatos < 0.08 e pH >= 0.38 
+
+* Entendemos que os melhores Vinhos Branco para Importar são aqueles que possuem o grau_alcolico < 0.34 e acidez_volatil >= -0.07 ou grau_alcolico >= 0.35 e grau_alcolico < 1.07 e fsd < -1.61
