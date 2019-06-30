@@ -1221,26 +1221,19 @@ Esse Dendrograma foi criado usando uma partição de 3 agrupamentos para cada ti
 
 ```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
 
-precisao.tinto.pca = 10.10
-precisao.tinto.chierarquico = 10.10
-
-precisao.tinto = data.frame("Tecnica" = c("Regressao Linear",
-                                     "Arvore de Regressao",
-                                     "Arvore de Decisao",
-                                     "Regressao Logistica",
-                                     "PCA",
-                                     "K-Means",
-                                     "Cluster Hierarquico"),
-                       "Acuracia" = c(as.numeric(precisao.tinto.rlinear),
+precisao.tinto = data.frame("Técnica" = c("Regressão Linear",
+                                     "Árvore Regressão",
+                                     "Árvore Decisao",
+                                     "Regressão Logística",
+                                     "K-Means"),
+                       "Acurácia" = c(as.numeric(precisao.tinto.rlinear),
                                       as.numeric(precisao.tinto.aregressao),
                                       as.numeric(precisao.tinto.adecisao),
                                       as.numeric(precisao.tinto.rlogistica),
-                                      as.numeric(precisao.tinto.pca),
-                                      as.numeric(precisao.tinto.kmeans),
-                                      as.numeric(precisao.tinto.chierarquico)), 
+                                      as.numeric(precisao.tinto.kmeans)), 
                        stringsAsFactors = FALSE)
 
-ggplot(precisao.tinto, aes(x=Tecnica, y=Acuracia, fill=Tecnica)) +
+ggplot(precisao.tinto, aes(x=Técnica, y=Acurácia, fill=Técnica)) +
   geom_bar(stat="identity") +
   scale_fill_hue(c = 40)
 
@@ -1250,26 +1243,19 @@ ggplot(precisao.tinto, aes(x=Tecnica, y=Acuracia, fill=Tecnica)) +
 
 ```{r chunk="idx_09_06" , echo=TRUE, eval=TRUE}
 
-precisao.branco.pca = 10.10
-precisao.branco.chierarquico = 10.10
-
-precisao.branco = data.frame("Tecnica" = c("Regressao Linear",
-                                     "Arvore de Regressao",
-                                     "Arvore de Decisao",
-                                     "Regressao Logistica",
-                                     "PCA",
-                                     "K-Means",
-                                     "Cluster Hierarquico"),
-                       "Acuracia" = c(as.numeric(precisao.branco.rlinear),
+precisao.branco = data.frame("Técnica" = c("Regressão Linear",
+                                     "Árvore Regressão",
+                                     "Árvore Decisão",
+                                     "Regressão Logística",
+                                     "K-Means"),
+                       "Acurácia" = c(as.numeric(precisao.branco.rlinear),
                                       as.numeric(precisao.branco.aregressao),
                                       as.numeric(precisao.branco.adecisao),
                                       as.numeric(precisao.branco.rlogistica),
-                                      as.numeric(precisao.branco.pca),
-                                      as.numeric(precisao.branco.kmeans),
-                                      as.numeric(precisao.branco.chierarquico)), 
+                                      as.numeric(precisao.branco.kmeans)), 
                        stringsAsFactors = FALSE)
 
-ggplot(precisao.branco, aes(x=Tecnica, y=Acuracia, fill=Tecnica)) +
+ggplot(precisao.branco, aes(x=Técnica, y=Acurácia, fill=Técnica)) +
   geom_bar(stat="identity") +
   scale_fill_hue(c = 40)
 
