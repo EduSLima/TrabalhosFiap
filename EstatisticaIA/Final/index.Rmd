@@ -1053,12 +1053,16 @@ points(Resultado$centers[11:9], col="RED", pch=7, cex=4)
 ```
 ### Algumas relações que conseguimos inferir com algortimo K-means para as variáveis alcoólico, sulfatos e pH na base vinho tinto
 
-Baixo teor alcoólico, baixos sulfatos
-baixos sulfatos, álcool elevado
-baixo pH, baixo teor alcoólico
-pH elevado, álcool alto
-pH elevado, baixos sulfatos
-baixo pH, altos sulfatos
+-Com Baixo teor alcoólico, temos baixos sulfatos
+-Com baixos sulfatos, temos álcool elevado
+-Com baixo pH, temos baixo teor alcoólico
+-Com pH elevado, temos álcool alto
+-Com pH elevado, temos baixos sulfatos
+-Com baixo pH, temos altos sulfatos
+
+é clara a relação do pH com álcool, o que segue as propriedades naturais conhecidas. Porém, a varíavel pH com sulfatos não tem um correlação forte, já que temos uma situação de alto e baixa quantidade de sulfatos na escala toda do pH.
+
+sulfatos e álccol também não seguem uma relação proporcional.
 
 
 ## Vinho Branco
@@ -1098,10 +1102,10 @@ points(Resultado$centers[11:9], col="RED", pch=7, cex=4)
 
 ### Algumas relações que conseguimos inferir com algortimo K-means para as variáveis alcoólico, sulfatos e pH na base vinho branco
 
-Para vinh branco é possível visualizar que para pH muito não temos tanto sulfatos altos como na base vinho tintos e que há maior número de dados na faixa intermediária (-1 à 1, em ambos eixos), em relação a base vinho tintos
+Para vinho branco é possível visualizar que para pH muito baixos não temos tanto sulfatos altos como na base vinho tintos e que há maior número de dados na faixa intermediária (-1 à 1, em ambos eixos), em relação a base vinho tintos. Ou seja, na base vinho tintos temos mais vinhos com sulfatos altos em relação aos vinhos brancos.
 
 
-Na relação grau alcoólico e sulfatos, vemos que na base de vinhos brancos os dados são mais bem distribuídos, onde é notório que para grau alcoólico mais elevado temos tanto sultados baixo como altos.
+Na relação grau alcoólico e sulfatos, vemos que na base de vinhos brancos os dados são mais bem distribuídos, onde é notório que para grau alcoólico mais elevado temos tanto sultados baixos como altos.
 
 Na comparação, das 3 variáveis juntas, é possível verificar que há maior quantidade de dados na faixa de pH baixo e grau alcoólico alto na base vinhos brancos do que vinhos tintos.
 
@@ -1263,6 +1267,14 @@ ggplot(precisao.branco, aes(x=Técnica, y=Acurácia, fill=Técnica)) +
 
 
 ## Análise Final
+
+O algoritmo Kmeans foi importante para conseguir visualizar graficamente como algumas variavéis se comportam e se possuem forte relação, como foi possível ver com pH e grau alcoolico, em uma relação diretamente proporcional. A propriedade sulfato não influenciou diretamente nas variáveis álcool e pH, pois haviam dados sem forte tendência em toda escala das variáveis comparadas. 
+
+Um ponto interessante na utilização do Kmeans foi para comparação de variáveis em bases diferentes, como na do vinho tinto e branco. Assim, foi possível verificar que há maior quantidade de dados(No de vinhos) na faixa de pH baixo e grau alcoólico alto na base vinhos brancos do que vinhos tintos. Sendo assim possível ter um maior número de escolhas de vinhos brancos nesse range para importadora.
+Sendo possível inferir, também, que há mais químicos presentes no vinho branco abaixando o pH. 
+
+Considerações gerais, o autor poderia ter segmentado a variável "Sulphates", em tipos de sulfatos ou tê-la nomeado diferente, pois na análise química precisamos saber qual é o íon do sulfato. Em pesquisas de vinhos feitas é comumente nomeado como "sulfatos" o K2SO4 e sua unidade de medida é em ( g/L ).
+Já o SO2 é conhecido como "anidro sulfuroso". Os sulfatos aparecem por oxidação de sulfitos, assim, sua quantificação auxilia a inferir sobre a produção de dióxido de enxofre(SO2). Legislação(Lei nº 7.678) que determina o máximo de 1,00 g/Lde K2SO4, com a visualização fácil através do histograma poderiámos sinalizar para importadora não comprar os vinhos com teor muito altos em ranges acima de 0.9.
 
 Segue abaixo o resultado final do Grupo E2GR referente a Análise de Qualidade dos Vinhos:
 
