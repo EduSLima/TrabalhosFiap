@@ -1264,3 +1264,16 @@ ggplot(precisao.branco, aes(x=Técnica, y=Acurácia, fill=Técnica)) +
 
 ## Análise Final
 
+Segue abaixo o resultado final do Grupo E2GR referente a Análise de Qualidade dos Vinhos:
+
+* Os vinhos devem ser analisados separadamente porque seus preditores divergem.
+
+* Efetuamos uma higienização do dataset por causa das duplicidades
+
+* Efetuamos a normalização dos dados utilizando a Técnica Box Cox para alcançar os objetivos.
+
+* Acreditamos que os algoritimos de Regressão Logística tendem a ser mais precisos.
+
+* Motivado por conta do grupo classificador de determinância de qualidade se é bom, médio ou ruim.
+
+* ??? ...Importação... ???
